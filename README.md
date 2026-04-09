@@ -134,12 +134,14 @@ cp server/.env.example server/.env
 
 Edit `server/.env` and fill in the values (see [Environment Variables](#environment-variables) below).
 
+```env
 DB_CONNECTION=pg
 DB_HOST=postgres
 DB_PORT=5433
 DB_USER=adonis
 DB_PASSWORD=adonis
 DB_DATABASE=smcc_db
+```
 
 ### 3. Start the stack
 
