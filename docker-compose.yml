@@ -1,0 +1,69 @@
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  # Postgres
+  postgres:
+    image: postgres:15
+    container_name: smcc_postgres
+    environment:
+      POSTGRES_USER: adonis
+      POSTGRES_PASSWORD: adonis
+      POSTGRES_DB: smcc_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Shared Redis
+  redis:
+    image: redis:7
+    container_name: smcc_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_volume:/data
+    command: redis-server --requirepass adonis
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "adonis", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # API Service
+  server:
+    image: server:latest
+    container_name: smcc_server
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8000:8000"
+      - "9229:9229"
+    environment:
+      - PG_HOST=postgres
+      - REDIS_HOST=redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./server:/home/node/app
+    networks:
+      - app-network
+    command: >
+      sh -c "dockerize -wait tcp://redis:6379 -timeout 60s &&
+             dockerize -wait tcp://postgres:5432 -timeout 60s &&
+             dumb-init node ace serve --watch --no-clear"
+
+volumes:
+  postgres_volume:
+  redis_volume:
