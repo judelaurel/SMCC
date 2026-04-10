@@ -1,11 +1,12 @@
 
 import InternalServerException from '#exceptions/internal_server_exception'
 import User from '#models/user'
-import NotFoundException from '#validators/auth/not_found_exception'
-import { loginValidator } from '#validators/auth/register_validator copy'
+import NotFoundException from '#exceptions/not_found_exception'
+import { loginValidator } from '#validators/auth/login_validator'
 import { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
 import { errors as authErrors } from '@adonisjs/auth'
+import UnauthorizedException from '#exceptions/unauthorized_exception'
 
 
 export default class LoginController {
@@ -39,7 +40,7 @@ export default class LoginController {
             // Return the user and profile
             return response.status(200).json({
                 status: 'success', // The status of the response
-                message: 'login successful', // The message of the response
+                message: 'User logged in successfully', // The message of the response
                 data: {
                     metadata: token,
                 },
@@ -48,8 +49,11 @@ export default class LoginController {
         }
         catch (error) {
             logger.error(error)
+            if(error instanceof authErrors.E_INVALID_CREDENTIALS) {
+                throw new UnauthorizedException('Invalid credentials')
+            }
 
-            if(error instanceof NotFoundException || error instanceof authErrors.E_INVALID_CREDENTIALS) {
+            if(error instanceof NotFoundException) {
                 throw error
             }
             throw new InternalServerException('Internal Server Error')

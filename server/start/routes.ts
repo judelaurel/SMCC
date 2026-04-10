@@ -43,6 +43,36 @@ router.group(() => {
   .prefix('users')
   //#endregion
 
+  //#region Brands
+  router.group(() => {
+    router.get('/', [controllers.v1.brands.Index])
+    router.post('/', [controllers.v1.brands.Store])
+    router.get('/:id', [controllers.v1.brands.Show])
+    router.put('/:id', [controllers.v1.brands.Update])
+    router.delete('/:id', [controllers.v1.brands.Destroy])
+
+    // Platforms sub-resource
+    router.get('/:brandId/platforms', [controllers.v1.brands.platforms.Index])
+    router.post('/:brandId/platforms', [controllers.v1.brands.platforms.Store])
+    router.delete('/:brandId/platforms/:platformId', [controllers.v1.brands.platforms.Destroy])
+  })
+  .middleware(middleware.auth())
+  .prefix('brands')
+  //#endregion
+
+  //#region Posts
+  router.group(() => {
+    router.post('/generate-ai', [controllers.v1.posts.GenerateAi])
+    router.get('/', [controllers.v1.posts.Index])
+    router.post('/', [controllers.v1.posts.Store])
+    router.get('/:id', [controllers.v1.posts.Show])
+    router.put('/:id', [controllers.v1.posts.Update])
+    router.delete('/:id', [controllers.v1.posts.Destroy])
+  })
+  .middleware(middleware.auth())
+  .prefix('posts')
+  //#endregion
+
 })
 .prefix('api/v1')
 

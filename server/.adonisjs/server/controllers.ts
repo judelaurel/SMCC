@@ -10,6 +10,26 @@ export const controllers = {
       Logout: () => import('#controllers/v1/auth/logout_controller'),
       Register: () => import('#controllers/v1/auth/register_controller'),
     },
+    brands: {
+      Destroy: () => import('#controllers/v1/brands/destroy_controller'),
+      Index: () => import('#controllers/v1/brands/index_controller'),
+      platforms: {
+        Destroy: () => import('#controllers/v1/brands/platforms/destroy_controller'),
+        Index: () => import('#controllers/v1/brands/platforms/index_controller'),
+        Store: () => import('#controllers/v1/brands/platforms/store_controller'),
+      },
+      Show: () => import('#controllers/v1/brands/show_controller'),
+      Store: () => import('#controllers/v1/brands/store_controller'),
+      Update: () => import('#controllers/v1/brands/update_controller'),
+    },
+    posts: {
+      Destroy: () => import('#controllers/v1/posts/destroy_controller'),
+      GenerateAi: () => import('#controllers/v1/posts/generate_ai_controller'),
+      Index: () => import('#controllers/v1/posts/index_controller'),
+      Show: () => import('#controllers/v1/posts/show_controller'),
+      Update: () => import('#controllers/v1/posts/update_controller'),
+      Store: () => import('#controllers/v1/posts/store_controller'),
+    },
     users: {
       Me: () => import('#controllers/v1/users/me_controller'),
     },

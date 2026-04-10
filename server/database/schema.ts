@@ -32,6 +32,92 @@ export class AuthAccessTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class BrandSchema extends BaseModel {
+  static $columns = ['createdAt', 'description', 'id', 'logoUrl', 'name', 'primaryColor', 'toneOfVoice', 'updatedAt', 'userId', 'uuid'] as const
+  $columns = BrandSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare logoUrl: string | null
+  @column()
+  declare name: string
+  @column()
+  declare primaryColor: string | null
+  @column()
+  declare toneOfVoice: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+  @column()
+  declare uuid: string
+}
+
+export class ContentTagSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'postId', 'tag'] as const
+  $columns = ContentTagSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare postId: number
+  @column()
+  declare tag: string
+}
+
+export class PostSchema extends BaseModel {
+  static $columns = ['brandId', 'content', 'createdAt', 'id', 'isAiGenerated', 'platformId', 'publishedAt', 'scheduledAt', 'status', 'title', 'updatedAt', 'userId', 'uuid'] as const
+  $columns = PostSchema.$columns
+  @column()
+  declare brandId: number
+  @column()
+  declare content: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare isAiGenerated: boolean
+  @column()
+  declare platformId: number
+  @column.dateTime()
+  declare publishedAt: DateTime | null
+  @column.dateTime()
+  declare scheduledAt: DateTime | null
+  @column()
+  declare status: string
+  @column()
+  declare title: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+  @column()
+  declare uuid: string
+}
+
+export class SocialPlatformSchema extends BaseModel {
+  static $columns = ['brandId', 'createdAt', 'id', 'isActive', 'platform', 'updatedAt'] as const
+  $columns = SocialPlatformSchema.$columns
+  @column()
+  declare brandId: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare isActive: boolean
+  @column()
+  declare platform: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class UserSchema extends BaseModel {
   static $columns = ['createdAt', 'email', 'firstName', 'id', 'isDeleted', 'lastName', 'password', 'updatedAt', 'username'] as const
   $columns = UserSchema.$columns

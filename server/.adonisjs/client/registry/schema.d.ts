@@ -11,10 +11,10 @@ export interface Registry {
     methods: ["POST"]
     pattern: '/api/v1/auth/login'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/auth/register_validator copy').loginValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/auth/login_validator').loginValidator)>>
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/auth/register_validator copy').loginValidator)>>
+      query: ExtractQuery<InferInput<(typeof import('#validators/auth/login_validator').loginValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/auth/login_controller').default['handle']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/auth/login_controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
