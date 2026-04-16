@@ -4,16 +4,15 @@ import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Brand from '#models/brand'
 
 export default class SocialPlatform extends BaseModel {
-  static table = 'social_platforms'
 
   @column({ isPrimary: true })
   declare id: number
 
-  @column()
-  declare brandId: number
+  // @column()
+  // declare brandId: number
 
   @column()
-  declare platform: 'instagram' | 'twitter' | 'linkedin' | 'tiktok' | 'facebook'
+  declare platform: 'instagram' | 'twitter' | 'linkedin' | 'mastodon'
 
   @column()
   declare isActive: boolean

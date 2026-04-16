@@ -32,8 +32,27 @@ export class AuthAccessTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class BrandMemberSchema extends BaseModel {
+  static $columns = ['addedBy', 'brandId', 'createdAt', 'id', 'role', 'updatedAt', 'userId'] as const
+  $columns = BrandMemberSchema.$columns
+  @column()
+  declare addedBy: number | null
+  @column()
+  declare brandId: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare role: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+}
+
 export class BrandSchema extends BaseModel {
-  static $columns = ['createdAt', 'description', 'id', 'logoUrl', 'name', 'primaryColor', 'toneOfVoice', 'updatedAt', 'userId', 'uuid'] as const
+  static $columns = ['createdAt', 'description', 'id', 'logoUrl', 'name', 'primaryColor', 'toneOfVoice', 'updatedAt', 'uuid'] as const
   $columns = BrandSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -52,8 +71,6 @@ export class BrandSchema extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
   @column()
-  declare userId: number
-  @column()
   declare uuid: string
 }
 
@@ -71,7 +88,7 @@ export class ContentTagSchema extends BaseModel {
 }
 
 export class PostSchema extends BaseModel {
-  static $columns = ['brandId', 'content', 'createdAt', 'id', 'isAiGenerated', 'platformId', 'publishedAt', 'scheduledAt', 'status', 'title', 'updatedAt', 'userId', 'uuid'] as const
+  static $columns = ['brandId', 'content', 'createdAt', 'createdBy', 'id', 'isAiGenerated', 'state', 'title', 'updatedAt', 'uuid'] as const
   $columns = PostSchema.$columns
   @column()
   declare brandId: number
@@ -79,33 +96,81 @@ export class PostSchema extends BaseModel {
   declare content: string
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column()
+  declare createdBy: number
   @column({ isPrimary: true })
   declare id: number
   @column()
   declare isAiGenerated: boolean
   @column()
-  declare platformId: number
-  @column.dateTime()
-  declare publishedAt: DateTime | null
-  @column.dateTime()
-  declare scheduledAt: DateTime | null
-  @column()
-  declare status: string
+  declare state: string
   @column()
   declare title: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
   @column()
-  declare userId: number
-  @column()
   declare uuid: string
 }
 
-export class SocialPlatformSchema extends BaseModel {
-  static $columns = ['brandId', 'createdAt', 'id', 'isActive', 'platform', 'updatedAt'] as const
-  $columns = SocialPlatformSchema.$columns
+export class ScheduledPostSchema extends BaseModel {
+  static $columns = ['createdAt', 'errorMessage', 'id', 'lastAttemptAt', 'postId', 'postType', 'publishStatus', 'publishedAt', 'retryCount', 'scheduledAt', 'socialAccountId', 'updatedAt'] as const
+  $columns = ScheduledPostSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
   @column()
-  declare brandId: number
+  declare errorMessage: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare lastAttemptAt: DateTime | null
+  @column()
+  declare postId: number | null
+  @column()
+  declare postType: string | null
+  @column()
+  declare publishStatus: string | null
+  @column.dateTime()
+  declare publishedAt: DateTime | null
+  @column()
+  declare retryCount: number | null
+  @column.dateTime()
+  declare scheduledAt: DateTime
+  @column()
+  declare socialAccountId: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class SocialAccountSchema extends BaseModel {
+  static $columns = ['accessToken', 'createdAt', 'expiresAt', 'id', 'platformId', 'providerUserId', 'refreshToken', 'scope', 'updatedAt', 'userId', 'username'] as const
+  $columns = SocialAccountSchema.$columns
+  @column()
+  declare accessToken: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare expiresAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare platformId: number
+  @column()
+  declare providerUserId: string
+  @column()
+  declare refreshToken: string | null
+  @column()
+  declare scope: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+  @column()
+  declare username: string
+}
+
+export class SocialPlatformSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'isActive', 'platform', 'updatedAt'] as const
+  $columns = SocialPlatformSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column({ isPrimary: true })

@@ -7,15 +7,16 @@ export default class MeController {
     async handle({ auth, response}: HttpContext) {
         
         try {
-            const authUser = auth.getUserOrFail(); 
+            const authUser = await auth.getUserOrFail(); 
             if (!authUser || authUser.isDeleted) {
                 if (!authUser) {
                     throw new ForbiddenException('User not found')
                 }
             }   
+
             const userFormat = {
                 id: authUser.id,
-                username: authUser.username,    
+                username: authUser.username,
                 firstName: authUser.firstName,
                 lastName: authUser.lastName,
                 email: authUser.email,

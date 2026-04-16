@@ -39,7 +39,7 @@ services:
   server:
     image: server:latest
     container_name: smcc_server
-    restart: always
+    restart: no
     depends_on:
       - postgres
       - redis

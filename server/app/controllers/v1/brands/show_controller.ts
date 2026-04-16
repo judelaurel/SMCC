@@ -7,14 +7,13 @@ export default class ShowController {
 
     const brand = await Brand.query()
       .where('id', params.id)
-      .where('userId', user.id)
-      .preload('platforms')
+      .whereHas('members', (q) => q.where('userId', user.id))
       .firstOrFail()
 
     return response.status(200).json({
       status: 'success',
       message: 'Brand retrieved successfully',
-      data: { brand },
+      data: brand,
     })
   }
 }

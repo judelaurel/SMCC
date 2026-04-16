@@ -1,29 +1,34 @@
 import Post from '#models/post'
+import { retrievePostValidator } from '#validators/post/retrieve_validator'
 import { HttpContext } from '@adonisjs/core/http'
 
 export default class IndexController {
-  async handle({ auth, request, response }: HttpContext) {
-    const user = auth.getUserOrFail()
-    const { status, brand_id: brandId, from, to } = request.qs()
+  async handle({ request, response }: HttpContext) {
 
-    const query = Post.query()
-      .where('userId', user.id)
-      .preload('brand')
-      .preload('platform')
-      .preload('tags')
-      .orderBy('createdAt', 'desc')
+    try{
+      const { brandId, state } = await request.validateUsing(retrievePostValidator)
 
-    if (status) query.where('status', status)
-    if (brandId) query.where('brandId', brandId)
-    if (from) query.where('scheduledAt', '>=', from)
-    if (to) query.where('scheduledAt', '<=', to)
+      const post = await Post.query()
+        .where('brand_id', brandId)
+         .if(state, (query) => {
+            query.where('state', !state)
+          })
+        .preload('tags')
+        .orderBy('createdAt', 'desc')
 
-    const posts = await query
+      return response.status(200).json({
+        status: 'success',
+        message: 'Posts retrieved successfully',
+        data: post,
+      })
+    }
 
-    return response.status(200).json({
-      status: 'success',
-      message: 'Posts retrieved successfully',
-      data: { posts },
-    })
+    catch(error: any){
+      return response.status(400).json({
+        status: 'error',
+        message: 'Invalid request data',
+        errors: error?.message || 'Validation failed',
+      })
+    }
   }
 }

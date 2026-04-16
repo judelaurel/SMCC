@@ -18,7 +18,7 @@ export default class UpdateController {
     return response.status(200).json({
       status: 'success',
       message: 'Brand updated successfully',
-      data: { brand },
+      data: brand,
     })
   }
 }

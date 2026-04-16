@@ -7,13 +7,6 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').notNullable()
       table.uuid('uuid').notNullable().unique()
-      table
-        .integer('user_id')
-        .notNullable()
-        .unsigned()
-        .references('id')
-        .inTable('users')
-        .onDelete('CASCADE')
       table.string('name', 100).notNullable()
       table.text('description').nullable()
       table

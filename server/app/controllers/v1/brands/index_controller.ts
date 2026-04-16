@@ -13,7 +13,7 @@ export default class IndexController {
     return response.status(200).json({
       status: 'success',
       message: 'Brands retrieved successfully',
-      data: { brands },
+      data: brands,
     })
   }
 }

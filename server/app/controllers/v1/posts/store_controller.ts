@@ -3,14 +3,12 @@ import Post from '#models/post'
 import SocialPlatform from '#models/social_platform'
 import ForbiddenException from '#exceptions/forbidden_exception'
 import { HttpContext } from '@adonisjs/core/http'
-import { DateTime } from 'luxon'
 import { createPostValidator } from '#validators/post/create_validator'
 
 export default class StoreController {
   async handle({ auth, request, response }: HttpContext) {
     const user = auth.getUserOrFail()
     const payload = await createPostValidator.validate(request.body())
-    
     const brand = await Brand.query()
       .where('id', payload.brandId)
       .where('userId', user.id) 
@@ -31,22 +29,19 @@ export default class StoreController {
     
     const post = new Post();
     post.brandId = brand.id
-    post.platformId = platform.id
-    post.userId = user.id
+    // post.platformId = platform.id
+    // post.userId = user.id
     post.title = payload.title
     post.content = payload.content
-    post.status = payload.status ?? 'draft'
+    post.state = payload.state ?? 'draft'
     post.isAiGenerated = payload.isAiGenerated ?? false
     
-    if (payload.scheduledAt) {
-        post.scheduledAt = DateTime.fromJSDate(payload.scheduledAt)
-    }
     await post.save()
 
     return response.status(201).json({
       status: 'success',
       message: 'Post created successfully',
-      data: { post },
+      data: post,
     })
   }
 }

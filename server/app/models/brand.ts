@@ -4,6 +4,7 @@ import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import { randomUUID } from 'node:crypto'
 import User from '#models/user'
 import SocialPlatform from '#models/social_platform'
+import BrandMember from './brand_member.ts'
 
 export default class Brand extends BaseModel {
   @column({ isPrimary: true })
@@ -11,9 +12,6 @@ export default class Brand extends BaseModel {
 
   @column()
   declare uuid: string
-
-  @column()
-  declare userId: number
 
   @column()
   declare name: string
@@ -46,4 +44,7 @@ export default class Brand extends BaseModel {
 
   @hasMany(() => SocialPlatform)
   declare platforms: HasMany<typeof SocialPlatform>
+
+  @hasMany(() => BrandMember)
+  declare members: HasMany<typeof BrandMember>
 }
