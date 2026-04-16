@@ -8,7 +8,6 @@ export default class StoreController {
     const payload = await createBrandValidator.validate(request.body())
 
     const brand = await Brand.create({
-      userId: user.id,
       name: payload.name,
       description: payload.description ?? null,
       toneOfVoice: payload.toneOfVoice,
@@ -19,7 +18,7 @@ export default class StoreController {
     return response.status(201).json({
       status: 'success',
       message: 'Brand created successfully',
-      data: { brand },
+      data: brand,
     })
   }
 }

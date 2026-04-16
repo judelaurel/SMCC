@@ -9,14 +9,13 @@ export default class ShowController {
       .where('id', params.id)
       .where('userId', user.id)
       .preload('brand')
-      .preload('platform')
       .preload('tags')
       .firstOrFail()
 
     return response.status(200).json({
       status: 'success',
       message: 'Post retrieved successfully',
-      data: { post },
+      data: post,
     })
   }
 }
