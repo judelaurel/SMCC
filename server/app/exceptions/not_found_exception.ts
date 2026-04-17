@@ -3,7 +3,7 @@ import { Exception } from '@adonisjs/core/exceptions'
 
 export default class NotFoundException extends Exception {
   static status = 404
-  static code = 'E_NOT_FOUND'
+  static code = 'ERR_NOT_FOUND'
 
   // Add a property to store number of login attempts
   loginAttempts?: string

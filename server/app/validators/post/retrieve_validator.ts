@@ -1,6 +1,6 @@
-import vine from '@vinejs/vine'
+import vine from '@vinejs/vine';
 
 export const retrievePostValidator = vine.create({
   brandId: vine.number().positive(),
-  state: vine.enum(['draft', 'completed', 'achieved'] as const).optional()
-})
+  state: vine.enum(['draft', 'completed', 'archived'] as const).optional(),
+});

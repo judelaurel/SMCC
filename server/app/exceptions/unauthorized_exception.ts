@@ -3,7 +3,7 @@ import { HttpContext } from '@adonisjs/core/http'
 
 export default class UnauthorizedException extends Exception {
   static status = 401
-  static code = 'E_UNAUTHORIZED'
+  static code = 'ERR_UNAUTHORIZED'
 
   async handle(error: this, ctx: HttpContext) {
     ctx.response.status(error.status).json({
