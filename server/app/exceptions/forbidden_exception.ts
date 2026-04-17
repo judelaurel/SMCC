@@ -3,7 +3,7 @@ import { Exception } from '@adonisjs/core/exceptions'
 
 export default class ForbiddenException extends Exception {
   static status = 403
-  static code = 'E_FORBIDDEN'
+  static code = 'ERR_FORBIDDEN'
 
   async handle(error: this, ctx: HttpContext) {
     ctx.response.status(error.status).json({

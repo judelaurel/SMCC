@@ -47,4 +47,15 @@ export default class Brand extends BaseModel {
 
   @hasMany(() => BrandMember)
   declare members: HasMany<typeof BrandMember>
+
+  public static baseQuery() {
+    return this.query().select(
+      'id',
+      'name',
+      'description',
+      'toneOfVoice',
+      'logoUrl',
+      'primaryColor'
+    )
+  }
 }

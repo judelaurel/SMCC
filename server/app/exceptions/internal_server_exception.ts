@@ -3,7 +3,7 @@ import { Exception } from '@adonisjs/core/exceptions'
 
 export default class InternalServerException extends Exception {
   static status = 500
-  static code = 'E_INTERNAL_SERVER'
+  static code = 'ERR_INTERNAL_SERVER'
 
   async handle(error: this, ctx: HttpContext) {
     ctx.response.status(error.status).json({

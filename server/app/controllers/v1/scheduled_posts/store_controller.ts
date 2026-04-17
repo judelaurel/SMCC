@@ -1,40 +1,73 @@
-import ScheduledPost from '#models/scheduled_post'
-import SocialAccount from '#models/social_account'
-import { createScheduledPostValidator } from '#validators/scheduled_post/create_update_validator'
-import { HttpContext } from '@adonisjs/core/http'
-import { DateTime } from 'luxon'
-import PublishPost from '../../../jobs/publish_post.ts'
-import logger from '@adonisjs/core/services/logger'
+import Post from '#models/post';
+import BrandMember from '#models/brand_member';
+import ScheduledPost from '#models/scheduled_post';
+import SocialAccount from '#models/social_account';
+import { createScheduledPostValidator } from '#validators/scheduled_post/create_update_validator';
+import ForbiddenException from '#exceptions/forbidden_exception';
+import { HttpContext } from '@adonisjs/core/http';
+import PublishPost from '../../../jobs/publish_post.ts';
+import logger from '@adonisjs/core/services/logger';
 
 export default class StoreController {
   async handle({ auth, request, response }: HttpContext) {
-    const user = auth.getUserOrFail()
-    const payload = await createScheduledPostValidator.validate(request.body())
+    const user = auth.getUserOrFail();
+    const payload = await request.validateUsing(createScheduledPostValidator);
 
-    // return payload;
-    await SocialAccount.query()
-      .where('id', payload.socialAccountId)
+    // Verify the post exists and belongs to a brand the user is a member of
+    const post = await Post.findOrFail(payload.postId);
+
+    const membership = await BrandMember.query()
+      .where('brandId', post.brandId)
       .where('userId', user.id)
-      .firstOrFail()
+      .first();
 
-    const post = await ScheduledPost.create({
-      socialAccountId: payload.socialAccountId,
-      postId: payload.postId,
-      postType: payload.postType ?? 'text',
-      scheduledAt: payload.scheduledAt ? DateTime.fromISO(payload.scheduledAt) : DateTime.now().plus({ minutes: 5 }),
-      publishStatus: 'pending',
-    })
-
-    if(post){
-        const delay = Math.max(new Date(post.scheduledAt.toJSDate()).getTime() - Date.now())  
-        await PublishPost.dispatch({ postId: post.postId, scheduledPostId: post.id }).in('1m')
-        logger.info(`Scheduled PublishPost job for post ${post.postId} with scheduledPostId ${post.id} to run in ${delay} ms`)
+    if (!membership) {
+      throw new ForbiddenException(
+        'You do not have permission to schedule posts for this brand',
+      );
     }
+
+    // Verify all requested social accounts belong to the authenticated user
+    const socialAccounts = await SocialAccount.query()
+      .whereIn('id', payload.socialAccountIds)
+      .where('userId', user.id);
+
+    if (socialAccounts.length !== payload.socialAccountIds.length) {
+      throw new ForbiddenException(
+        'One or more social accounts do not belong to you',
+      );
+    }
+
+    const diffMs = payload.scheduledAt.diffNow().as('milliseconds');
+    const totalMinutes = Math.max(0, Math.ceil(diffMs / 60000));
+
+    const scheduledPosts = await Promise.all(
+      socialAccounts.map(async account => {
+        const scheduled = await ScheduledPost.create({
+          socialAccountId: account.id,
+          postId: post.id,
+          postType: payload.postType ?? 'text',
+          scheduledAt: payload.scheduledAt,
+          publishStatus: 'pending',
+        });
+
+        await PublishPost.dispatch({
+          postId: post.id,
+          scheduledPostId: scheduled.id,
+        }).in(`${totalMinutes}m`);
+
+        logger.info(
+          `Scheduled PublishPost job for post ${post.id} on account ${account.id} (scheduledPostId ${scheduled.id}) in ${totalMinutes} minutes`,
+        );
+
+        return scheduled;
+      }),
+    );
 
     return response.status(201).json({
       status: 'success',
       message: 'Post scheduled successfully',
-      data: post,
-    })
+      data: scheduledPosts,
+    });
   }
 }

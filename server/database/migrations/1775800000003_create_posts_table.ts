@@ -1,13 +1,12 @@
-import { BaseSchema } from '@adonisjs/lucid/schema'
+import { BaseSchema } from '@adonisjs/lucid/schema';
 
 export default class extends BaseSchema {
-  protected tableName = 'posts'
+  protected tableName = 'posts';
 
   async up() {
-    this.schema.createTable(this.tableName, (table) => {
-
-      table.increments('id').notNullable()
-      table.uuid('uuid').notNullable().unique()
+    this.schema.createTable(this.tableName, table => {
+      table.increments('id').notNullable();
+      table.uuid('uuid').notNullable().unique();
 
       table
         .integer('brand_id')
@@ -15,16 +14,16 @@ export default class extends BaseSchema {
         .unsigned()
         .references('id')
         .inTable('brands')
-        .onDelete('CASCADE')
+        .onDelete('CASCADE');
 
-      table.string('title', 255).notNullable()
-      table.text('content').notNullable()
-      
+      table.string('title', 255).notNullable();
+      table.text('content').notNullable();
+
       table
         .string('state', 20)
         .notNullable()
         .defaultTo('draft')
-        .checkIn(['draft', 'completed', 'achieved'])
+        .checkIn(['draft', 'scheduled', 'completed', 'archived']);
 
       table
         .integer('created_by')
@@ -32,15 +31,15 @@ export default class extends BaseSchema {
         .unsigned()
         .references('id')
         .inTable('users')
-        .onDelete('CASCADE')
+        .onDelete('CASCADE');
 
-      table.boolean('is_ai_generated').notNullable().defaultTo(false)
-      table.timestamp('created_at').notNullable()
-      table.timestamp('updated_at').nullable()
-    })
+      table.boolean('is_ai_generated').notNullable().defaultTo(false);
+      table.timestamp('created_at').notNullable();
+      table.timestamp('updated_at').nullable();
+    });
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    this.schema.dropTable(this.tableName);
   }
 }
