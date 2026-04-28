@@ -1,4 +1,6 @@
 import Brand from '#models/brand';
+import BrandMember from '#models/brand_member';
+import ForbiddenException from '#exceptions/forbidden_exception';
 import { updateBrandValidator } from '#validators/brand/update_validator';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -6,12 +8,18 @@ export default class UpdateController {
   async handle({ auth, params, request, response }: HttpContext) {
     const user = auth.getUserOrFail();
 
-    const brand = await Brand.query()
-      .where('id', params.id)
+    // Only owner or admin can edit a brand
+    const membership = await BrandMember.query()
+      .where('brandId', params.id)
       .where('userId', user.id)
-      .firstOrFail();
+      .first();
 
-    const payload = await updateBrandValidator.validate(request.body());
+    if (!membership || membership.role === 'member') {
+      throw new ForbiddenException('Only owners and admins can edit brands');
+    }
+
+    const brand = await Brand.findOrFail(params.id);
+    const payload = await request.validateUsing(updateBrandValidator);
     brand.merge(payload);
     await brand.save();
 

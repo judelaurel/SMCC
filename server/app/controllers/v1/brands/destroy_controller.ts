@@ -1,15 +1,23 @@
 import Brand from '#models/brand';
+import BrandMember from '#models/brand_member';
+import ForbiddenException from '#exceptions/forbidden_exception';
 import { HttpContext } from '@adonisjs/core/http';
 
 export default class DestroyController {
   async handle({ auth, params, response }: HttpContext) {
     const user = auth.getUserOrFail();
 
-    const brand = await Brand.query()
-      .where('id', params.id)
+    // Only the owner can delete a brand
+    const membership = await BrandMember.query()
+      .where('brandId', params.id)
       .where('userId', user.id)
-      .firstOrFail();
+      .first();
 
+    if (!membership || membership.role !== 'owner') {
+      throw new ForbiddenException('Only the brand owner can delete a brand');
+    }
+
+    const brand = await Brand.findOrFail(params.id);
     await brand.delete();
 
     return response.status(200).json({

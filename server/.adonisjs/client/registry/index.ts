@@ -25,10 +25,22 @@ const routes = {
     types: placeholder as Registry['logout']['types'],
   },
   'me': {
-    methods: ["POST"],
+    methods: ["GET","HEAD"],
     pattern: '/api/v1/users/me',
     tokens: [{"old":"/api/v1/users/me","type":0,"val":"api","end":""},{"old":"/api/v1/users/me","type":0,"val":"v1","end":""},{"old":"/api/v1/users/me","type":0,"val":"users","end":""},{"old":"/api/v1/users/me","type":0,"val":"me","end":""}],
     types: placeholder as Registry['me']['types'],
+  },
+  'users.profile.update': {
+    methods: ["PUT"],
+    pattern: '/api/v1/users/profile',
+    tokens: [{"old":"/api/v1/users/profile","type":0,"val":"api","end":""},{"old":"/api/v1/users/profile","type":0,"val":"v1","end":""},{"old":"/api/v1/users/profile","type":0,"val":"users","end":""},{"old":"/api/v1/users/profile","type":0,"val":"profile","end":""}],
+    types: placeholder as Registry['users.profile.update']['types'],
+  },
+  'users.password.update': {
+    methods: ["PUT"],
+    pattern: '/api/v1/users/password',
+    tokens: [{"old":"/api/v1/users/password","type":0,"val":"api","end":""},{"old":"/api/v1/users/password","type":0,"val":"v1","end":""},{"old":"/api/v1/users/password","type":0,"val":"users","end":""},{"old":"/api/v1/users/password","type":0,"val":"password","end":""}],
+    types: placeholder as Registry['users.password.update']['types'],
   },
   'permission': {
     methods: ["GET","HEAD"],
@@ -43,7 +55,7 @@ const routes = {
     types: placeholder as Registry['oauth.mastodon.redirect']['types'],
   },
   'oauth.mastodon.callback': {
-    methods: ["GET","HEAD"],
+    methods: ["POST"],
     pattern: '/api/v1/users/oauth/mastodon/callback',
     tokens: [{"old":"/api/v1/users/oauth/mastodon/callback","type":0,"val":"api","end":""},{"old":"/api/v1/users/oauth/mastodon/callback","type":0,"val":"v1","end":""},{"old":"/api/v1/users/oauth/mastodon/callback","type":0,"val":"users","end":""},{"old":"/api/v1/users/oauth/mastodon/callback","type":0,"val":"oauth","end":""},{"old":"/api/v1/users/oauth/mastodon/callback","type":0,"val":"mastodon","end":""},{"old":"/api/v1/users/oauth/mastodon/callback","type":0,"val":"callback","end":""}],
     types: placeholder as Registry['oauth.mastodon.callback']['types'],
@@ -77,6 +89,36 @@ const routes = {
     pattern: '/api/v1/brands/:id',
     tokens: [{"old":"/api/v1/brands/:id","type":0,"val":"api","end":""},{"old":"/api/v1/brands/:id","type":0,"val":"v1","end":""},{"old":"/api/v1/brands/:id","type":0,"val":"brands","end":""},{"old":"/api/v1/brands/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['brands.destroy']['types'],
+  },
+  'brand-members.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/api/v1/brands/:brandId/members',
+    tokens: [{"old":"/api/v1/brands/:brandId/members","type":0,"val":"api","end":""},{"old":"/api/v1/brands/:brandId/members","type":0,"val":"v1","end":""},{"old":"/api/v1/brands/:brandId/members","type":0,"val":"brands","end":""},{"old":"/api/v1/brands/:brandId/members","type":1,"val":"brandId","end":""},{"old":"/api/v1/brands/:brandId/members","type":0,"val":"members","end":""}],
+    types: placeholder as Registry['brand-members.index']['types'],
+  },
+  'brand-members.store': {
+    methods: ["POST"],
+    pattern: '/api/v1/brands/:brandId/members',
+    tokens: [{"old":"/api/v1/brands/:brandId/members","type":0,"val":"api","end":""},{"old":"/api/v1/brands/:brandId/members","type":0,"val":"v1","end":""},{"old":"/api/v1/brands/:brandId/members","type":0,"val":"brands","end":""},{"old":"/api/v1/brands/:brandId/members","type":1,"val":"brandId","end":""},{"old":"/api/v1/brands/:brandId/members","type":0,"val":"members","end":""}],
+    types: placeholder as Registry['brand-members.store']['types'],
+  },
+  'brand-members.update': {
+    methods: ["PUT"],
+    pattern: '/api/v1/brands/:brandId/members/:memberId',
+    tokens: [{"old":"/api/v1/brands/:brandId/members/:memberId","type":0,"val":"api","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":0,"val":"v1","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":0,"val":"brands","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":1,"val":"brandId","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":0,"val":"members","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":1,"val":"memberId","end":""}],
+    types: placeholder as Registry['brand-members.update']['types'],
+  },
+  'brand-members.destroy': {
+    methods: ["DELETE"],
+    pattern: '/api/v1/brands/:brandId/members/:memberId',
+    tokens: [{"old":"/api/v1/brands/:brandId/members/:memberId","type":0,"val":"api","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":0,"val":"v1","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":0,"val":"brands","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":1,"val":"brandId","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":0,"val":"members","end":""},{"old":"/api/v1/brands/:brandId/members/:memberId","type":1,"val":"memberId","end":""}],
+    types: placeholder as Registry['brand-members.destroy']['types'],
+  },
+  'brand-members.available-users': {
+    methods: ["GET","HEAD"],
+    pattern: '/api/v1/brands/:brandId/members/available-users',
+    tokens: [{"old":"/api/v1/brands/:brandId/members/available-users","type":0,"val":"api","end":""},{"old":"/api/v1/brands/:brandId/members/available-users","type":0,"val":"v1","end":""},{"old":"/api/v1/brands/:brandId/members/available-users","type":0,"val":"brands","end":""},{"old":"/api/v1/brands/:brandId/members/available-users","type":1,"val":"brandId","end":""},{"old":"/api/v1/brands/:brandId/members/available-users","type":0,"val":"members","end":""},{"old":"/api/v1/brands/:brandId/members/available-users","type":0,"val":"available-users","end":""}],
+    types: placeholder as Registry['brand-members.available-users']['types'],
   },
   'platforms.retrieve': {
     methods: ["GET","HEAD"],
@@ -125,6 +167,12 @@ const routes = {
     pattern: '/api/v1/posts/:id',
     tokens: [{"old":"/api/v1/posts/:id","type":0,"val":"api","end":""},{"old":"/api/v1/posts/:id","type":0,"val":"v1","end":""},{"old":"/api/v1/posts/:id","type":0,"val":"posts","end":""},{"old":"/api/v1/posts/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['posts.destroy']['types'],
+  },
+  'social-platforms.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/api/v1/social-platforms',
+    tokens: [{"old":"/api/v1/social-platforms","type":0,"val":"api","end":""},{"old":"/api/v1/social-platforms","type":0,"val":"v1","end":""},{"old":"/api/v1/social-platforms","type":0,"val":"social-platforms","end":""}],
+    types: placeholder as Registry['social-platforms.index']['types'],
   },
   'social-accounts.index': {
     methods: ["GET","HEAD"],

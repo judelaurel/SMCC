@@ -1,38 +1,49 @@
-import SocialAccount from '#models/social_account'
-import { mastodonOAuthService } from '#services/oauth/mastodon_oauth_service'
-import { oauthStateService } from '#services/oauth/oauth_state_service'
-import env from '#start/env'
-import { HttpContext } from '@adonisjs/core/http'
-import { DateTime } from 'luxon'
+import SocialAccount from '#models/social_account';
+import { mastodonOAuthService } from '#services/oauth/mastodon_oauth_service';
+import { oauthStateService } from '#services/oauth/oauth_state_service';
+import { HttpContext } from '@adonisjs/core/http';
+import { DateTime } from 'luxon';
 
 export default class CallbackController {
-  async handle({ request, response }: HttpContext) {
-    
-    const { code, state: encodedState, error } = request.qs()
+  async handle({ auth, request, response }: HttpContext) {
+    const user = auth.getUserOrFail();
 
-    // Provider denied access
-    if (error) {
-      return this.redirectWithError(response, 'access_denied')
-    }
+    const { code, state: encodedState } = request.body();
 
     if (!code || !encodedState) {
-      return this.redirectWithError(response, 'invalid_request')
+      return response.status(400).json({
+        status: 'error',
+        message: 'Missing code or state',
+      });
     }
 
-    const state = oauthStateService.decode(encodedState)
+    const state = oauthStateService.decode(encodedState);
     if (!state) {
-      return this.redirectWithError(response, 'invalid_state')
+      return response.status(400).json({
+        status: 'error',
+        message: 'Invalid or expired state',
+      });
     }
 
-    let tokens
-    let profile
-    try {
-      tokens = await mastodonOAuthService.exchangeCode(code)
-      profile = await mastodonOAuthService.getProfile(tokens.accessToken)
-    } catch {
-      return this.redirectWithError(response, 'token_exchange_failed', state.redirectTo)
+    if (state.userId !== user.id) {
+      return response.status(403).json({
+        status: 'error',
+        message: 'State user mismatch',
+      });
     }
-    
+
+    let tokens;
+    let profile;
+    try {
+      tokens = await mastodonOAuthService.exchangeCode(code);
+      profile = await mastodonOAuthService.getProfile(tokens.accessToken);
+    } catch (err: any) {
+      return response.status(502).json({
+        status: 'error',
+        message: err?.message ?? 'Token exchange failed',
+      });
+    }
+
     await SocialAccount.updateOrCreate(
       { userId: state.userId, platformId: state.platformId },
       {
@@ -42,15 +53,13 @@ export default class CallbackController {
         refreshToken: tokens.refreshToken,
         expiresAt: tokens.expiresAt ? DateTime.fromISO(tokens.expiresAt) : null,
         scope: tokens.scope,
-      }
-    )
+      },
+    );
 
-    const redirectTo = state.redirectTo ?? env.get('APP_URL')
-    return response.redirect(`${redirectTo}?oauth=success&platform=mastodon`)
-  }
-
-  private redirectWithError(response: any, reason: string, redirectTo?: string) {
-    const base = redirectTo ?? env.get('APP_URL')
-    return response.redirect(`${base}?oauth=error&reason=${reason}`)
+    return response.status(200).json({
+      status: 'success',
+      message: 'Mastodon account connected successfully',
+      data: { platform: 'mastodon', username: profile.username },
+    });
   }
 }

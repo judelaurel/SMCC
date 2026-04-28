@@ -1,19 +1,47 @@
-import { generateAiPostValidator } from '#validators/ai_post'
-import { HttpContext } from '@adonisjs/core/http'
+import Brand from '#models/brand';
+import { anthropicService } from '#services/ai/anthropic_service';
+import { generateAiPostValidator } from '#validators/ai_post';
+import { HttpContext } from '@adonisjs/core/http';
 
 export default class GenerateAiController {
-  async handle({ request, response }: HttpContext) {
-    await generateAiPostValidator.validate(request.body())
+  async handle({ auth, request, response }: HttpContext) {
+    auth.getUserOrFail();
 
-    // TODO (Week 4): Integrate Anthropic Claude SDK
-    // 1. Build a system prompt using brand.toneOfVoice + payload.platform
-    // 2. Call Anthropic client.messages.create(...)
-    // 3. Parse response and return 3 variations
+    const payload = await request.validateUsing(generateAiPostValidator);
 
-    return response.status(501).json({
-      status: 'error',
-      message: 'AI generation not yet implemented — coming in Week 4',
-      data: null,
-    })
+    let brandName: string | undefined;
+    let brandDescription: string | undefined;
+
+    if (payload.brandId) {
+      const brand = await Brand.find(payload.brandId);
+      if (brand) {
+        brandName = brand.name;
+        brandDescription = brand.description ?? undefined;
+      }
+    }
+
+    let variations;
+    try {
+      variations = await anthropicService.generatePostVariations({
+        topic: payload.topic,
+        platform: payload.platform,
+        toneOfVoice: payload.toneOfVoice,
+        keywords: payload.keywords,
+        brandName,
+        brandDescription,
+      });
+    } catch (err: any) {
+      return response.status(502).json({
+        status: 'error',
+        message: err?.message ?? 'AI generation failed',
+        data: null,
+      });
+    }
+
+    return response.status(200).json({
+      status: 'success',
+      message: 'Variations generated',
+      data: { variations },
+    });
   }
 }

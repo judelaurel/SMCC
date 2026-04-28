@@ -142,7 +142,7 @@ export class ScheduledPostSchema extends BaseModel {
 }
 
 export class SocialAccountSchema extends BaseModel {
-  static $columns = ['accessToken', 'createdAt', 'expiresAt', 'id', 'platformId', 'providerUserId', 'refreshToken', 'scope', 'updatedAt', 'userId', 'username'] as const
+  static $columns = ['accessToken', 'createdAt', 'expiresAt', 'id', 'isActive', 'platformId', 'providerUserId', 'refreshToken', 'scope', 'updatedAt', 'userId', 'username'] as const
   $columns = SocialAccountSchema.$columns
   @column()
   declare accessToken: string
@@ -152,6 +152,8 @@ export class SocialAccountSchema extends BaseModel {
   declare expiresAt: DateTime | null
   @column({ isPrimary: true })
   declare id: number
+  @column()
+  declare isActive: boolean
   @column()
   declare platformId: number
   @column()

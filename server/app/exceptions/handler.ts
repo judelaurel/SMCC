@@ -5,6 +5,7 @@ import ForbiddenException from './forbidden_exception.ts';
 import UnauthorizedException from './unauthorized_exception.ts';
 import logger from '@adonisjs/core/services/logger';
 import { ValidationError } from '@vinejs/vine';
+import { errors as authErrors } from '@adonisjs/auth';
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   /**
@@ -43,10 +44,13 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       },
     ] as const;
 
+    console.log(error);
+
     for (const { error: ExceptionClass, status, code } of errorHandlers) {
       if (
-        ExceptionClass === ValidationError &&
-        error instanceof ValidationError
+        (ExceptionClass === ValidationError &&
+          error instanceof ValidationError) ||
+        error instanceof authErrors.E_INVALID_CREDENTIALS
       ) {
         return super.handle(error, ctx);
       }

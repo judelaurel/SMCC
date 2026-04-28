@@ -7,8 +7,10 @@ export default class IndexController {
 
     const brands = await Brand.baseQuery()
       .whereHas('members', query => {
-        query.where('id', user.id);
+        query.where('userId', user.id);
       })
+      // Preload only the current user's membership so the frontend knows their role
+      .preload('members', q => q.where('userId', user.id))
       .orderBy('createdAt', 'desc');
 
     return response.status(200).json({

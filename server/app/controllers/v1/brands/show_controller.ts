@@ -9,6 +9,7 @@ export default class ShowController {
     const brand = await Brand.baseQuery()
       .where('id', params.id)
       .whereHas('members', q => q.where('userId', user.id))
+      .preload('members', q => q.preload('user'))
       .first();
 
     if (!brand) {
