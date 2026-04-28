@@ -11,13 +11,13 @@ import { randomUUID } from 'node:crypto';
 import Brand from '#models/brand';
 import User from '#models/user';
 import ContentTag from '#models/content_tag';
-import BrandMember from './brand_member.ts';
 
 export default class Post extends BaseModel {
   public static baseQuery() {
     return this.query().select(
       'id',
       'brandId',
+      'createdBy',
       'title',
       'content',
       'state',

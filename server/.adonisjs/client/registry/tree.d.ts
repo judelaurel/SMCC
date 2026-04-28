@@ -6,6 +6,14 @@ export interface ApiDefinition {
   register: typeof routes['register']
   logout: typeof routes['logout']
   me: typeof routes['me']
+  users: {
+    profile: {
+      update: typeof routes['users.profile.update']
+    }
+    password: {
+      update: typeof routes['users.password.update']
+    }
+  }
   permission: typeof routes['permission']
   oauth: {
     mastodon: {
@@ -20,6 +28,13 @@ export interface ApiDefinition {
     update: typeof routes['brands.update']
     destroy: typeof routes['brands.destroy']
   }
+  brandMembers: {
+    index: typeof routes['brand-members.index']
+    store: typeof routes['brand-members.store']
+    update: typeof routes['brand-members.update']
+    destroy: typeof routes['brand-members.destroy']
+    availableUsers: typeof routes['brand-members.available-users']
+  }
   platforms: {
     retrieve: typeof routes['platforms.retrieve']
     destroy: typeof routes['platforms.destroy']
@@ -31,6 +46,9 @@ export interface ApiDefinition {
     show: typeof routes['posts.show']
     update: typeof routes['posts.update']
     destroy: typeof routes['posts.destroy']
+  }
+  socialPlatforms: {
+    index: typeof routes['social-platforms.index']
   }
   socialAccounts: {
     index: typeof routes['social-accounts.index']

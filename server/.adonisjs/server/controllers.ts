@@ -11,6 +11,13 @@ export const controllers = {
       Register: () => import('#controllers/v1/auth/register_controller'),
     },
     brands: {
+      brandMembers: {
+        AvailableUsers: () => import('#controllers/v1/brands/brand_members/available_users_controller'),
+        Destroy: () => import('#controllers/v1/brands/brand_members/destroy_controller'),
+        Index: () => import('#controllers/v1/brands/brand_members/index_controller'),
+        Store: () => import('#controllers/v1/brands/brand_members/store_controller'),
+        Update: () => import('#controllers/v1/brands/brand_members/update_controller'),
+      },
       Destroy: () => import('#controllers/v1/brands/destroy_controller'),
       Index: () => import('#controllers/v1/brands/index_controller'),
       Show: () => import('#controllers/v1/brands/show_controller'),
@@ -43,6 +50,9 @@ export const controllers = {
       Show: () => import('#controllers/v1/social_accounts/show_controller'),
       Store: () => import('#controllers/v1/social_accounts/store_controller'),
     },
+    socialPlatforms: {
+      Index: () => import('#controllers/v1/social_platforms/index_controller'),
+    },
     users: {
       Me: () => import('#controllers/v1/users/me_controller'),
       oauth: {
@@ -52,6 +62,8 @@ export const controllers = {
         },
       },
       Permission: () => import('#controllers/v1/users/permission_controller'),
+      UpdatePassword: () => import('#controllers/v1/users/update_password_controller'),
+      UpdateProfile: () => import('#controllers/v1/users/update_profile_controller'),
     },
   },
 }

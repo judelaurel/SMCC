@@ -12,7 +12,7 @@ services:
       POSTGRES_PASSWORD: adonis
       POSTGRES_DB: smcc_db
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - postgres_volume:/var/lib/postgresql/data
     networks:
@@ -23,14 +23,14 @@ services:
     image: redis:7
     container_name: smcc_redis
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_volume:/data
     command: redis-server --requirepass adonis
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "adonis", "ping"]
+      test: ['CMD', 'redis-cli', '--no-auth-warning', '-a', 'adonis', 'ping']
       interval: 30s
       timeout: 5s
       retries: 5
@@ -43,18 +43,19 @@ services:
     depends_on:
       - postgres
       - redis
+      - ollama
     build:
       context: ./server
       dockerfile: Dockerfile
       target: development
     ports:
-      - "8000:8000"
-      - "9229:9229"
+      - '8000:8000'
+      - '9229:9229'
     environment:
       - PG_HOST=postgres
       - REDIS_HOST=redis
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     volumes:
       - ./server:/home/node/app
     networks:
@@ -64,6 +65,23 @@ services:
              dockerize -wait tcp://postgres:5432 -timeout 60s &&
              dumb-init node ace serve --watch --no-clear"
 
+  # Ollama AI
+  ollama:
+    image: ollama/ollama:latest
+    container_name: smcc_ollama
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_volume:/root/.ollama
+    networks:
+      - app-network
+    entrypoint: >
+      sh -c "ollama serve &
+             sleep 5 &&
+             ollama pull llama3.2 &&
+             wait"
+
 volumes:
   postgres_volume:
   redis_volume:
+  ollama_volume:

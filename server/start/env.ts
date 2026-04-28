@@ -9,7 +9,7 @@
 |
 */
 
-import { Env } from '@adonisjs/core/env'
+import { Env } from '@adonisjs/core/env';
 
 export default await Env.create(new URL('../', import.meta.url), {
   // Node
@@ -21,6 +21,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   // App
   APP_KEY: Env.schema.secret(),
   APP_URL: Env.schema.string({ format: 'url', tld: false }),
+  FRONTEND_URL: Env.schema.string({ format: 'url', tld: false }),
 
   // DATABASE
   DATABASE_URL: Env.schema.string(),
@@ -40,6 +41,11 @@ export default await Env.create(new URL('../', import.meta.url), {
   // Session
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
 
+  // Ollama AI
+  OLLAMA_BASE_URL: Env.schema.string({ format: 'url', tld: false }),
+  OLLAMA_MODEL: Env.schema.string(),
+  OLLAMA_API_KEY: Env.schema.string.optional(),
+
   // Mastodon OAuth
   MASTODON_INSTANCE: Env.schema.string.optional(),
   MASTODON_CLIENT_ID: Env.schema.string.optional(),
@@ -50,5 +56,5 @@ export default await Env.create(new URL('../', import.meta.url), {
   | Variables for configuring @adonisjs/queue
   |----------------------------------------------------------
   */
-  QUEUE_DRIVER: Env.schema.enum(['redis', 'database', 'sync'] as const)
-})
+  QUEUE_DRIVER: Env.schema.enum(['redis', 'database', 'sync'] as const),
+});

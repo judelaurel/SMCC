@@ -1,4 +1,5 @@
 import Post from '#models/post';
+import BrandMember from '#models/brand_member';
 import { retrievePostValidator } from '#validators/post/retrieve_validator';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -9,7 +10,13 @@ export default class IndexController {
       retrievePostValidator,
     );
 
-    const posts = await Post.baseQuery()
+    // Resolve the user's role in this brand
+    const membership = await BrandMember.query()
+      .where('brandId', brandId)
+      .where('userId', user.id)
+      .first();
+
+    const postsQuery = Post.baseQuery()
       .where('brand_id', brandId)
       .whereHas('brand', brandQuery => {
         brandQuery.whereHas('members', memberQuery => {
@@ -17,10 +24,17 @@ export default class IndexController {
         });
       })
       .if(state, query => {
-        query.where('state', !state);
+        query.where('state', state || 'draft');
       })
       .preload('tags')
       .orderBy('createdAt', 'desc');
+
+    // Members only see posts they created
+    if (membership?.role === 'member') {
+      postsQuery.where('created_by', user.id);
+    }
+
+    const posts = await postsQuery;
 
     return response.status(200).json({
       status: 'success',

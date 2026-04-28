@@ -44,7 +44,7 @@ export interface Registry {
     }
   }
   'me': {
-    methods: ["POST"]
+    methods: ["GET","HEAD"]
     pattern: '/api/v1/users/me'
     types: {
       body: {}
@@ -53,6 +53,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/users/me_controller').default['handle']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/users/me_controller').default['handle']>>>
+    }
+  }
+  'users.profile.update': {
+    methods: ["PUT"]
+    pattern: '/api/v1/users/profile'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/user/update_validator').updateProfileValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/user/update_validator').updateProfileValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/users/update_profile_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/users/update_profile_controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'users.password.update': {
+    methods: ["PUT"]
+    pattern: '/api/v1/users/password'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/user/update_validator').updatePasswordValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/user/update_validator').updatePasswordValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/users/update_password_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/users/update_password_controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'permission': {
@@ -80,7 +104,7 @@ export interface Registry {
     }
   }
   'oauth.mastodon.callback': {
-    methods: ["GET","HEAD"]
+    methods: ["POST"]
     pattern: '/api/v1/users/oauth/mastodon/callback'
     types: {
       body: {}
@@ -149,6 +173,66 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/brands/destroy_controller').default['handle']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/brands/destroy_controller').default['handle']>>>
+    }
+  }
+  'brand-members.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/brands/:brandId/members'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { brandId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/index_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/index_controller').default['handle']>>>
+    }
+  }
+  'brand-members.store': {
+    methods: ["POST"]
+    pattern: '/api/v1/brands/:brandId/members'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/brand/brand_member_validator').createBrandMemberValidator)>>
+      paramsTuple: [ParamValue]
+      params: { brandId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/brand/brand_member_validator').createBrandMemberValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/store_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/store_controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'brand-members.update': {
+    methods: ["PUT"]
+    pattern: '/api/v1/brands/:brandId/members/:memberId'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/brand/brand_member_validator').updateBrandMemberValidator)>>
+      paramsTuple: [ParamValue, ParamValue]
+      params: { brandId: ParamValue; memberId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/brand/brand_member_validator').updateBrandMemberValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/update_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/update_controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'brand-members.destroy': {
+    methods: ["DELETE"]
+    pattern: '/api/v1/brands/:brandId/members/:memberId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { brandId: ParamValue; memberId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/destroy_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/destroy_controller').default['handle']>>>
+    }
+  }
+  'brand-members.available-users': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/brands/:brandId/members/available-users'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { brandId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/available_users_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/brands/brand_members/available_users_controller').default['handle']>>>
     }
   }
   'platforms.retrieve': {
@@ -245,6 +329,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/posts/destroy_controller').default['handle']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/posts/destroy_controller').default['handle']>>>
+    }
+  }
+  'social-platforms.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/social-platforms'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/v1/social_platforms/index_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/v1/social_platforms/index_controller').default['handle']>>>
     }
   }
   'social-accounts.index': {

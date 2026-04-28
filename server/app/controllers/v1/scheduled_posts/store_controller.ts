@@ -27,10 +27,11 @@ export default class StoreController {
       );
     }
 
-    // Verify all requested social accounts belong to the authenticated user
+    // Verify all requested social accounts belong to the authenticated user and are active
     const socialAccounts = await SocialAccount.query()
       .whereIn('id', payload.socialAccountIds)
-      .where('userId', user.id);
+      .where('userId', user.id)
+      .where('isActive', true);
 
     if (socialAccounts.length !== payload.socialAccountIds.length) {
       throw new ForbiddenException(
@@ -63,6 +64,10 @@ export default class StoreController {
         return scheduled;
       }),
     );
+
+    // Update the post state to 'scheduled'
+    post.state = 'scheduled';
+    await post.save();
 
     return response.status(201).json({
       status: 'success',
