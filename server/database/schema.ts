@@ -113,7 +113,7 @@ export class PostSchema extends BaseModel {
 }
 
 export class ScheduledPostSchema extends BaseModel {
-  static $columns = ['createdAt', 'errorMessage', 'id', 'lastAttemptAt', 'postId', 'postType', 'publishStatus', 'publishedAt', 'retryCount', 'scheduledAt', 'socialAccountId', 'updatedAt'] as const
+  static $columns = ['createdAt', 'errorMessage', 'id', 'lastAttemptAt', 'postId', 'postType', 'publishStatus', 'publishedAt', 'retryCount', 'scheduledAt', 'socialAccountId', 'title', 'updatedAt'] as const
   $columns = ScheduledPostSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -137,6 +137,8 @@ export class ScheduledPostSchema extends BaseModel {
   declare scheduledAt: DateTime
   @column()
   declare socialAccountId: number
+  @column()
+  declare title: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

@@ -32,6 +32,9 @@ export default class ScheduledPost extends BaseModel {
     | 'cancelled';
 
   @column()
+  declare title: string | null;
+
+  @column()
   declare errorMessage: string | null;
 
   @column()

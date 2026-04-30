@@ -22,8 +22,27 @@ export default class PublishPost extends Job<PublishPostPayload> {
   async execute() {
     const { postId, scheduledPostId } = this.payload;
 
-    const post = await Post.findOrFail(postId);
     const scheduledPost = await ScheduledPost.findOrFail(scheduledPostId);
+
+    // Skip if the schedule was cancelled before the job ran
+    if (scheduledPost.publishStatus === 'cancelled') {
+      logger.info(
+        `Skipping publish for scheduledPostId ${scheduledPostId} — already cancelled`,
+      );
+      return;
+    }
+
+    const post = await Post.findOrFail(postId);
+
+    // Skip if the post was deleted (archived) before the job ran
+    if (post.state === 'archived') {
+      scheduledPost.publishStatus = 'cancelled';
+      await scheduledPost.save();
+      logger.info(
+        `Skipping publish for scheduledPostId ${scheduledPostId} — post ${postId} is archived`,
+      );
+      return;
+    }
     const account = await SocialAccount.query()
       .where('id', scheduledPost.socialAccountId)
       .preload('platform')

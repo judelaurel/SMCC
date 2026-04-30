@@ -24,7 +24,7 @@ export default class StoreController {
     post.brandId = brand.id;
     post.title = payload.title;
     post.content = payload.content;
-    post.state = payload.state ?? 'draft';
+    post.state = 'draft';
     post.createdBy = user.id;
     post.isAiGenerated = payload.isAiGenerated ?? false;
 

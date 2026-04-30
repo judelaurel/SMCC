@@ -20,7 +20,6 @@ export interface ICreatePost {
   brandId: number;
   title: string;
   content: string;
-  state?: 'draft' | 'completed' | 'archived';
   isAiGenerated?: boolean;
 }
 

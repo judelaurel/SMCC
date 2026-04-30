@@ -21,6 +21,15 @@ export default class HttpExceptionHandler extends ExceptionHandler {
   async handle(error: unknown, ctx: HttpContext) {
     const { response } = ctx;
 
+    /**
+     * ✅ Handle PostgreSQL unique constraint
+     */
+
+    // console.log(error as any, 'error code');
+    // if ((error as any).code === '23505') {
+    //   return super.handle(error, ctx);
+    // }
+
     const errorHandlers = [
       {
         error: UnauthorizedException,
@@ -42,11 +51,15 @@ export default class HttpExceptionHandler extends ExceptionHandler {
         status: 422,
         code: 'ERR_UNPROCESSABLE_ENTITY',
       },
+      {
+        error: ValidationError,
+        status: 422,
+        code: 'E_VALIDATION_ERROR',
+      },
     ] as const;
 
-    console.log(error);
-
     for (const { error: ExceptionClass, status, code } of errorHandlers) {
+      // console.log(ExceptionClass, error);
       if (
         (ExceptionClass === ValidationError &&
           error instanceof ValidationError) ||

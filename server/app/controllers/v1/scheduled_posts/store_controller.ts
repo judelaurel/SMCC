@@ -47,6 +47,7 @@ export default class StoreController {
         const scheduled = await ScheduledPost.create({
           socialAccountId: account.id,
           postId: post.id,
+          title: post.title,
           postType: payload.postType ?? 'text',
           scheduledAt: payload.scheduledAt,
           publishStatus: 'pending',

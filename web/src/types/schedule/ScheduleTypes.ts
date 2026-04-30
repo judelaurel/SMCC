@@ -20,6 +20,7 @@ export interface IScheduledPost {
   id: number;
   socialAccountId: number;
   postId: number;
+  title: string | null;
   postType: 'text' | 'link' | 'image';
   scheduledAt: string;
   publishedAt: string | null;
