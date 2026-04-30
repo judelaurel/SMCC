@@ -20,7 +20,6 @@ const errors = ref<Record<string, string>>({})
 const form = ref({
   title: '',
   content: '',
-  state: 'draft' as 'draft' | 'scheduled' | 'completed' | 'archived',
 })
 
 onMounted(async () => {
@@ -31,7 +30,6 @@ onMounted(async () => {
       const post: IPost = res.data
       form.value.title = post.title
       form.value.content = post.content
-      form.value.state = post.state
     } catch {
       router.push('/posts')
     } finally {
@@ -55,14 +53,12 @@ async function handleSubmit() {
       await postStore.editPost(Number(route.params.id), {
         title: form.value.title,
         content: form.value.content,
-        state: form.value.state,
       })
     } else {
       await postStore.addPost({
         brandId: brandStore.currentBrand!.id,
         title: form.value.title,
         content: form.value.content,
-        state: form.value.state,
         isAiGenerated: aiUsed.value,
       })
     }
@@ -87,7 +83,7 @@ const variations = ref<IPostVariation[]>([])
 
 const aiForm = ref({
   topic: '',
-  platform: 'instagram' as 'instagram' | 'twitter' | 'linkedin' | 'mastodon',
+  platform: 'mastodon' as 'instagram' | 'twitter' | 'linkedin' | 'mastodon',
   toneOfVoice: 'casual' as 'professional' | 'casual' | 'witty' | 'formal',
   keywordsRaw: '',
 })
@@ -231,9 +227,9 @@ function charClass(count: number, limit: number) {
                 v-model="aiForm.platform"
                 class="rounded-lg border-gray-300 text-sm focus:border-violet-500 focus:ring-violet-500"
               >
-                <option value="instagram">Instagram</option>
-                <option value="twitter">Twitter / X</option>
-                <option value="linkedin">LinkedIn</option>
+                <option disabled value="instagram">Instagram</option>
+                <option disabled value="twitter">Twitter / X</option>
+                <option disabled value="linkedin">LinkedIn</option>
                 <option value="mastodon">Mastodon</option>
               </select>
             </div>
@@ -312,19 +308,6 @@ function charClass(count: number, limit: number) {
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- State -->
-        <div class="flex flex-col">
-          <label class="mb-1.5 text-sm font-medium text-gray-700">State</label>
-          <select
-            v-model="form.state"
-            class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          >
-            <option value="draft">Draft</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="completed">Completed</option>
-          </select>
         </div>
       </div>
 

@@ -1,9 +1,9 @@
-import ForbiddenException from '#exceptions/forbidden_exception';
 import NotFoundException from '#exceptions/not_found_exception';
 import Post from '#models/post';
 import BrandMember from '#models/brand_member';
 import { updatePostValidator } from '#validators/post/update_validator';
 import { HttpContext } from '@adonisjs/core/http';
+import ScheduledPost from '#models/scheduled_post';
 
 export default class UpdateController {
   async handle({ auth, params, request, response }: HttpContext) {
@@ -30,12 +30,24 @@ export default class UpdateController {
       throw new NotFoundException('Post not found');
     }
 
-    if (['completed', 'archived'].includes(post.state)) {
-      throw new ForbiddenException('Cannot edit post in its current state');
-    }
+    post.title = payload.title ?? post.title;
+    post.content = payload.content ?? post.content;
+    post.isAiGenerated = payload.isAiGenerated ?? post.isAiGenerated;
+    post.state = payload.state ?? post.state;
 
-    post.merge(payload);
     await post.save();
+
+    if (post.state === 'scheduled') {
+      const schedulePosts = await ScheduledPost.query()
+        .where('postId', post.id)
+        .where('publishStatus', 'pending')
+        .first();
+
+      if (schedulePosts) {
+        schedulePosts.title = post.title;
+        await schedulePosts.save();
+      }
+    }
 
     return response.ok({
       status: 'success',

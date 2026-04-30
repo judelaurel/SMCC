@@ -2,6 +2,7 @@ import ForbiddenException from '#exceptions/forbidden_exception';
 import NotFoundException from '#exceptions/not_found_exception';
 import BrandMember from '#models/brand_member';
 import Post from '#models/post';
+import ScheduledPost from '#models/scheduled_post';
 import { HttpContext } from '@adonisjs/core/http';
 
 export default class DestroyController {
@@ -24,9 +25,19 @@ export default class DestroyController {
         'You are not allowed to perform this action',
       );
     }
-    post.state = 'archived';
 
-    await post.save();
+    if (post.state === 'archived') {
+      await post.delete();
+    } else {
+      // Cancel any pending/processing scheduled posts before archiving
+      await ScheduledPost.query()
+        .where('postId', post.id)
+        .whereIn('publishStatus', ['pending', 'processing'])
+        .update({ publishStatus: 'cancelled' });
+
+      post.state = 'archived';
+      await post.save();
+    }
 
     return response.status(200).json({
       status: 'success',

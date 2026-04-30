@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { useBrandStore } from '@/stores/brand.ts'
 import { usePostStore } from '@/stores/post.ts'
 import { useAuthStore } from '@/stores/auth'
+import { updatePost } from '@/api/services/posts'
 import type { IPost } from '@/types/post/PostTypes'
 
 const brandStore = useBrandStore()
 const postStore = usePostStore()
 const authStore = useAuthStore()
-const router = useRouter()
 
 const stateFilter = ref<string>('')
+const showArchived = ref(false)
+
 const tabs = [
   { label: 'All', value: '' },
   { label: 'Draft', value: 'draft' },
@@ -23,22 +24,45 @@ const currentUserRole = computed(
   () => brandStore.currentBrand?.members?.[0]?.role ?? 'member',
 )
 
+// Client-side filtering — keeps archived separate from the main tabs
+const visiblePosts = computed(() => {
+  return postStore.posts.filter(p => {
+    if (p.state === 'archived') return false
+    if (!stateFilter.value) return true
+    return p.state === stateFilter.value
+  })
+})
+
+const archivedPosts = computed(() =>
+  postStore.posts.filter(p => p.state === 'archived'),
+)
+
 async function load() {
   if (brandStore.currentBrand) {
-    await postStore.loadPosts(
-      brandStore.currentBrand.id,
-      stateFilter.value || undefined,
-    )
+    // Always fetch all — tabs are client-side
+    await postStore.loadPosts(brandStore.currentBrand.id)
   }
 }
 
 onMounted(load)
 watch(() => brandStore.currentBrand?.id, load)
-watch(stateFilter, load)
 
-async function handleDelete(id: number) {
-  if (!confirm('Are you sure you want to delete this post?')) return
-  await postStore.removePost(id)
+async function handleDelete(post: IPost) {
+  if (post.state === 'scheduled') {
+    const ok = confirm(
+      'This post is currently scheduled. Deleting it will also cancel all pending schedule records. Continue?',
+    )
+    if (!ok) return
+  } else {
+    if (!confirm('Are you sure you want to delete this post?')) return
+  }
+  await postStore.removePost(post.id)
+  await load()
+}
+
+async function handleRestore(post: IPost) {
+  await updatePost(post.id, { state: 'draft' })
+  await load()
 }
 
 function canEditPost(post: IPost): boolean {
@@ -72,11 +96,7 @@ function stateClass(state: string) {
           stroke-width="2"
           viewBox="0 0 24 24"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M12 4v16m8-8H4"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         New Post
       </router-link>
@@ -91,7 +111,7 @@ function stateClass(state: string) {
     </div>
 
     <template v-else>
-      <!-- Tabs -->
+      <!-- Tabs (client-side, never includes archived) -->
       <div class="flex gap-1 mb-4 bg-white rounded-lg border border-gray-200 p-1 w-fit">
         <button
           v-for="tab in tabs"
@@ -116,91 +136,129 @@ function stateClass(state: string) {
         Loading...
       </div>
 
-      <!-- Empty -->
-      <div
-        v-else-if="!postStore.posts.length"
-        class="bg-white rounded-lg border border-gray-200 p-12 text-center text-gray-500"
-      >
-        <p class="text-lg font-medium text-gray-700 mb-2">No posts found</p>
-        <p>Create your first post to get started.</p>
-      </div>
+      <template v-else>
+        <!-- Empty active posts -->
+        <div
+          v-if="!visiblePosts.length"
+          class="bg-white rounded-lg border border-gray-200 p-12 text-center text-gray-500"
+        >
+          <p class="text-lg font-medium text-gray-700 mb-2">No posts found</p>
+          <p>Create your first post to get started.</p>
+        </div>
 
-      <!-- Posts Table -->
-      <div
-        v-else
-        class="bg-white rounded-lg border border-gray-200 overflow-hidden"
-      >
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-gray-100">
-              <th
-                class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-5 py-3"
+        <!-- Posts Table -->
+        <div v-else class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-100">
+                <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-5 py-3">Title</th>
+                <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-5 py-3">State</th>
+                <th class="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-5 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr
+                v-for="post in visiblePosts"
+                :key="post.id"
+                class="hover:bg-gray-50 transition-colors"
               >
-                Title
-              </th>
-              <th
-                class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-5 py-3"
-              >
-                State
-              </th>
-              <th
-                class="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-5 py-3"
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr
-              v-for="post in postStore.posts"
-              :key="post.id"
-              class="hover:bg-gray-50 transition-colors"
-            >
-              <td class="px-5 py-3">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium text-gray-900">
-                    {{ post.title }}
-                  </span>
+                <td class="px-5 py-3">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-900">{{ post.title }}</span>
+                    <span
+                      v-if="post.isAiGenerated"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
+                    >AI</span>
+                  </div>
+                </td>
+                <td class="px-5 py-3">
                   <span
-                    v-if="post.isAiGenerated"
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
-                  >
-                    AI
-                  </span>
-                </div>
-              </td>
-              <td class="px-5 py-3">
-                <span
-                  :class="[
-                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize',
-                    stateClass(post.state),
-                  ]"
+                    :class="['inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize', stateClass(post.state)]"
+                  >{{ post.state }}</span>
+                </td>
+                <td class="px-5 py-3 text-right">
+                  <div v-if="canEditPost(post)" class="flex items-center justify-end gap-3">
+                    <router-link
+                      v-if="post.state !== 'completed'"
+                      :to="`/posts/${post.id}/edit`"
+                      class="text-sm text-indigo-600 hover:text-indigo-800"
+                    >Edit</router-link>
+                    <button
+                      v-if="post.state !== 'completed'"
+                      @click="handleDelete(post)"
+                      class="text-sm text-red-600 hover:text-red-800"
+                    >Delete</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Archived section toggle -->
+        <div class="mt-6">
+          <button
+            @click="showArchived = !showArchived"
+            class="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <svg
+              :class="['size-4 transition-transform', showArchived ? 'rotate-90' : '']"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+            Archived
+            <span class="text-xs text-gray-400 font-normal">({{ archivedPosts.length }})</span>
+          </button>
+
+          <div v-if="showArchived && archivedPosts.length" class="mt-3 bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-100 bg-gray-50">
+                  <th class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-2.5">Title</th>
+                  <th class="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-2.5">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr
+                  v-for="post in archivedPosts"
+                  :key="post.id"
+                  class="hover:bg-gray-50 transition-colors"
                 >
-                  {{ post.state }}
-                </span>
-              </td>
-              <td class="px-5 py-3 text-right">
-                <div class="flex items-center justify-end gap-2">
-                  <router-link
-                    v-if="canEditPost(post)"
-                    :to="`/posts/${post.id}/edit`"
-                    class="text-sm text-indigo-600 hover:text-indigo-800"
-                  >
-                    Edit
-                  </router-link>
-                  <button
-                    v-if="canEditPost(post)"
-                    @click="handleDelete(post.id)"
-                    class="text-sm text-red-600 hover:text-red-800"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm text-gray-500">{{ post.title }}</span>
+                      <span
+                        v-if="post.isAiGenerated"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
+                      >AI</span>
+                    </div>
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <div v-if="canEditPost(post)" class="flex items-center justify-end gap-3">
+                      <button
+                        @click="handleRestore(post)"
+                        class="text-sm text-amber-600 hover:text-amber-800"
+                      >Restore</button>
+                      <button
+                        @click="handleDelete(post)"
+                        class="text-sm text-red-600 hover:text-red-800"
+                      >Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-else-if="showArchived && !archivedPosts.length" class="mt-3 bg-white rounded-lg border border-gray-200 p-6 text-center text-gray-400 text-sm">
+            No archived posts.
+          </div>
+        </div>
+      </template>
     </template>
   </div>
 </template>

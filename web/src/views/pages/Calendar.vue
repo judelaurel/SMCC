@@ -57,7 +57,7 @@ const calendarEvents = computed(() => {
       const isPosted = sp.publishStatus === 'posted'
       return {
         id: String(sp.id),
-        title: sp.post?.title ?? `Post #${sp.postId}`,
+        title: sp.title ?? sp.post?.title ?? `Post #${sp.postId}`,
         start: sp.scheduledAt,
         backgroundColor: isPosted ? '#16a34a' : '#6366f1',
         borderColor: isPosted ? '#15803d' : '#4f46e5',
@@ -100,18 +100,28 @@ const draftPosts = computed<IPost[]>(() =>
 // ─── Min time for the schedule picker (no past) ───────────────────────────
 const minDateTime = computed(() => {
   const now = new Date()
-  now.setMinutes(now.getMinutes() + 5) // at least 5 min from now
-  return now.toISOString().slice(0, 16)
+  now.setMinutes(now.getMinutes() + 7)
+
+  const offset = now.getTimezoneOffset()
+  const local = new Date(now.getTime() - offset * 60000)
+
+  return local.toISOString().slice(0, 16)
 })
 
 /** Min time respecting selected date — if future date, midnight is fine */
 const minTimeForDate = computed(() => {
-  if (!selectedDate.value) return minDateTime.value
+  const now = new Date()
+  const offset = now.getTimezoneOffset()
+  const local = new Date(now.getTime() - offset * 60000)
+  
+  if (!selectedDate.value) return local.toISOString().slice(0, 16)
+
   const today = new Date().toISOString().slice(0, 10)
   if (selectedDate.value > today) {
     return `${selectedDate.value}T00:00`
   }
-  return minDateTime.value
+
+  return local.toISOString().slice(0, 16)
 })
 
 // ─── FullCalendar options ─────────────────────────────────────────────────
@@ -156,8 +166,8 @@ function openNewSchedule() {
     selectedAccountIds: [],
     postType: 'text',
     time: selectedDate.value
-      ? `${selectedDate.value}T12:00`
-      : minDateTime.value,
+      ? minDateTime.value 
+      : `${selectedDate.value}T12:00`,
   }
   scheduleErrors.value = {}
   showScheduleModal.value = true
@@ -181,6 +191,9 @@ function toggleAccount(id: number) {
 }
 
 function validateScheduleForm(): boolean {
+  const now = new Date()
+  const untilTime = now.setMinutes(now.getMinutes() + 5)
+  const timer = new Date(scheduleForm.value.time)
   scheduleErrors.value = {}
   if (!scheduleForm.value.postId) {
     scheduleErrors.value.postId = 'Select a post to schedule'
@@ -190,7 +203,7 @@ function validateScheduleForm(): boolean {
   }
   if (!scheduleForm.value.time) {
     scheduleErrors.value.time = 'Select a date & time'
-  } else if (scheduleForm.value.time <= minDateTime.value) {
+  } else if (timer.getTime() <= untilTime) {
     scheduleErrors.value.time = 'Time must be in the future'
   }
   return Object.keys(scheduleErrors.value).length === 0
@@ -309,7 +322,13 @@ const isDisabled = computed(() => {
 
       <!-- ── Calendar (65%) ──────────────────────────────────────────── -->
       <div class="w-[65%] bg-white rounded-xl border border-gray-200 p-4 overflow-auto">
-        <FullCalendar :options="calendarOptions" />
+        <FullCalendar :options="calendarOptions">
+          <!-- <template v-slot:eventContent='arg'>
+            <div class="flex max-w-20">
+              <b class="overflow-hidden text-ellipsis ">{{ arg.event.title }}</b>
+            </div>
+          </template> -->
+        </FullCalendar>
       </div>
 
       <!-- ── Right panel (35%) ─────────────────────────────────────── -->
@@ -354,7 +373,7 @@ const isDisabled = computed(() => {
             >
               <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-medium text-gray-900 truncate">{{ sp.post?.title ?? `Post #${sp.postId}` }}</p>
+                  <p class="text-sm font-medium text-gray-900 truncate">{{ sp.title ?? sp.post?.title ?? `Post #${sp.postId}` }}</p>
                   <p class="text-xs text-gray-500 mt-0.5">
                     {{ platformIcon(sp.socialAccount?.platform?.platform ?? '') }}
                     {{ sp.socialAccount?.username }}
@@ -444,7 +463,7 @@ const isDisabled = computed(() => {
             <div class="flex items-start justify-between gap-3">
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-gray-900 truncate">
-                  {{ sp.post?.title ?? `Post #${sp.postId}` }}
+                  {{ sp.title ?? sp.post?.title ?? `Post #${sp.postId}` }}
                 </p>
                 <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ sp.post?.content }}</p>
               </div>
@@ -582,6 +601,7 @@ const isDisabled = computed(() => {
               <button
                 v-for="type in ['text', 'link', 'image']"
                 :key="type"
+                :disabled="['link', 'image'].includes(type)"
                 type="button"
                 @click="scheduleForm.postType = type as any"
                 :class="[
@@ -589,6 +609,7 @@ const isDisabled = computed(() => {
                   scheduleForm.postType === type
                     ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50',
+                  ['link', 'image'].includes(type) ? 'cursor-not-allowed opacity-50' : '',  
                 ]"
               >
                 {{ type }}
@@ -672,6 +693,8 @@ const isDisabled = computed(() => {
   letter-spacing: 0.05em;
 }
 .fc .fc-event {
+  min-width: 70px;
+  max-width: 130px;
   border-radius: 6px !important;
   font-size: 0.7rem !important;
   padding: 1px 4px !important;
@@ -682,5 +705,6 @@ const isDisabled = computed(() => {
 }
 .fc-theme-standard td, .fc-theme-standard th {
   border-color: #f3f4f6 !important;
+  overflow: hidden !important;
 }
 </style>
