@@ -11,9 +11,14 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppBadge: typeof import('./src/components/common/AppBadge.vue')['default']
+    AppModal: typeof import('./src/components/common/AppModal.vue')['default']
+    AppSelect: typeof import('./src/components/common/AppSelect.vue')['default']
     BrandSelector: typeof import('./src/components/common/BrandSelector.vue')['default']
     Button: typeof import('./src/components/common/Button.vue')['default']
+    FormField: typeof import('./src/components/common/FormField.vue')['default']
     Input: typeof import('./src/components/common/Input.vue')['default']
+    PageHeader: typeof import('./src/components/common/PageHeader.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Sidebar: typeof import('./src/components/common/Sidebar.vue')['default']

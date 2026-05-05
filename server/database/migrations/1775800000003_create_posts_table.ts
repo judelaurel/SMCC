@@ -23,7 +23,7 @@ export default class extends BaseSchema {
         .string('state', 20)
         .notNullable()
         .defaultTo('draft')
-        .checkIn(['draft', 'scheduled', 'completed', 'archived']);
+        .checkIn(['draft', 'scheduled', 'completed', 'trash']);
 
       table
         .integer('created_by')

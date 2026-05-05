@@ -1,5 +1,5 @@
 import Brand from '#models/brand';
-import { anthropicService } from '#services/ai/anthropic_service';
+import { ollamaService } from '#services/ai/ollama_service';
 import { generateAiPostValidator } from '#validators/ai_post';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -22,7 +22,7 @@ export default class GenerateAiController {
 
     let variations;
     try {
-      variations = await anthropicService.generatePostVariations({
+      variations = await ollamaService.generatePostVariations({
         topic: payload.topic,
         platform: payload.platform,
         toneOfVoice: payload.toneOfVoice,

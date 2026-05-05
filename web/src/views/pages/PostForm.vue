@@ -158,18 +158,13 @@ function charClass(count: number, limit: number) {
       <div class="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
 
         <!-- Title -->
-        <div class="flex flex-col">
-          <label class="mb-1.5 text-sm font-medium text-gray-700">
-            Title <span class="text-red-500">*</span>
-          </label>
-          <input
-            v-model="form.title"
-            type="text"
-            placeholder="Post title"
-            class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          <span v-if="errors.title" class="text-sm text-red-500 mt-1">{{ errors.title }}</span>
-        </div>
+        <FormField
+          label="Title"
+          v-model="form.title"
+          placeholder="Post title"
+          required
+          :error="errors.title"
+        />
 
         <!-- Content + AI button -->
         <div class="flex flex-col">
@@ -195,13 +190,14 @@ function charClass(count: number, limit: number) {
             </button>
           </div>
 
-          <textarea
+          <FormField
+            label=""
             v-model="form.content"
-            rows="8"
+            type="textarea"
+            :rows="8"
             placeholder="Write your post content..."
-            class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+            :error="errors.content"
           />
-          <span v-if="errors.content" class="text-sm text-red-500 mt-1">{{ errors.content }}</span>
         </div>
 
         <!-- ── AI Panel ─────────────────────────────────────────────────── -->
@@ -313,13 +309,9 @@ function charClass(count: number, limit: number) {
 
       <!-- Actions -->
       <div class="flex items-center gap-3">
-        <button
-          type="submit"
-          :disabled="saving"
-          class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-        >
-          {{ saving ? 'Saving...' : isEdit ? 'Update Post' : 'Create Post' }}
-        </button>
+        <Button type="submit" :loading="saving">
+          {{ isEdit ? 'Update Post' : 'Create Post' }}
+        </Button>
         <router-link
           to="/posts"
           class="inline-flex items-center px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"

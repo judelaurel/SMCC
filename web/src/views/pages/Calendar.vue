@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import type { CalendarOptions, EventClickArg } from '@fullcalendar/core'
 import type { DateClickArg } from '@fullcalendar/interaction'
@@ -126,12 +128,12 @@ const minTimeForDate = computed(() => {
 
 // ─── FullCalendar options ─────────────────────────────────────────────────
 const calendarOptions = computed<CalendarOptions>(() => ({
-  plugins: [dayGridPlugin, interactionPlugin],
+  plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
   headerToolbar: {
     left: 'prev,next today',
     center: 'title',
-    right: '',
+    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
   },
   events: calendarEvents.value,
   dateClick: onDateClick,
@@ -161,13 +163,18 @@ function onDatesSet(info: { startStr: string; endStr: string }) {
 }
 
 function openNewSchedule() {
+  const today = new Date().toISOString().slice(0, 10)
+  let defaultTime = minDateTime.value
+
+  if (selectedDate.value && selectedDate.value > today) {
+    defaultTime = `${selectedDate.value}T12:00`
+  }
+
   scheduleForm.value = {
     postId: null,
     selectedAccountIds: [],
     postType: 'text',
-    time: selectedDate.value
-      ? minDateTime.value 
-      : `${selectedDate.value}T12:00`,
+    time: defaultTime,
   }
   scheduleErrors.value = {}
   showScheduleModal.value = true
@@ -391,7 +398,7 @@ const isDisabled = computed(() => {
         </div>
 
         <!-- Draft posts panel -->
-        <div class="bg-white rounded-xl border border-gray-200 flex flex-col shrink-0 max-h-[280px]">
+        <div class="bg-white rounded-xl border border-gray-200 flex flex-col shrink-0 max-h-70">
           <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
             <h2 class="text-sm font-semibold text-gray-900">Draft Posts</h2>
             <router-link to="/posts/create" class="text-xs text-indigo-600 hover:text-indigo-800">+ New Post</router-link>
@@ -413,246 +420,183 @@ const isDisabled = computed(() => {
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       Day Modal — shows scheduled events for selected date + "Add schedule"
-  ════════════════════════════════════════════════════════════════════════════ -->
-  <Teleport to="body">
-    <div v-if="showDayModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" @click="closeDayModal" />
-
-      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900">
-              {{ new Date(selectedDate + 'T00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) }}
-            </h3>
-            <div class="flex items-center gap-3 mt-0.5">
-              <p class="text-sm text-gray-500">{{ dayScheduledPosts.length }} shown</p>
-              <button
-                @click="showDayCancelled = !showDayCancelled"
-                :class="[
-                  'text-xs px-2 py-0.5 rounded-full font-medium transition-colors',
-                  showDayCancelled
-                    ? 'bg-gray-200 text-gray-700'
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200',
-                ]"
-              >
-                {{ showDayCancelled ? 'Hide cancelled' : 'Show cancelled' }}
-              </button>
-            </div>
-          </div>
-          <button @click="closeDayModal" class="size-8 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
-            <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <!-- Scheduled items for this day -->
-        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-          <div v-if="!dayScheduledPosts.length" class="text-center py-6 text-gray-400">
-            <svg class="mx-auto size-10 text-gray-200 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h12M6 12h8m-8 6h12"/></svg>
-            <p class="text-sm">No posts scheduled for this day</p>
-          </div>
-
-          <div
-            v-for="sp in dayScheduledPosts"
-            :key="sp.id"
-            class="bg-gray-50 rounded-xl p-4 border border-gray-100"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900 truncate">
-                  {{ sp.title ?? sp.post?.title ?? `Post #${sp.postId}` }}
-                </p>
-                <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ sp.post?.content }}</p>
-              </div>
-              <span :class="['shrink-0 text-xs px-2 py-0.5 rounded-full font-medium', statusClass(sp.publishStatus)]">
-                {{ sp.publishStatus }}
-              </span>
-            </div>
-            <div class="flex items-center justify-between mt-3">
-              <div class="flex items-center gap-1.5 text-xs text-gray-500">
-                <span>{{ platformIcon(sp.socialAccount?.platform?.platform ?? '') }}</span>
-                <span class="font-medium">{{ sp.socialAccount?.username }}</span>
-                <span>·</span>
-                <span>{{ formatTime(sp.scheduledAt) }}</span>
-              </div>
-              <button
-                v-if="canCancelScheduledPost(sp)"
-                @click="handleCancelSchedule(sp.id)"
-                class="text-xs text-red-500 hover:text-red-700 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="px-6 py-4 border-t border-gray-100" v-show="!isDisabled">
-          <button
-            @click="openNewSchedule"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors"
-          >
-            <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Schedule a post for this day
-          </button>
-        </div>
+  <!-- Day Modal — shows scheduled events for selected date + "Add schedule" -->
+  <AppModal
+    v-model="showDayModal"
+    :title="new Date(selectedDate + 'T00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })"
+  >
+    <template #header-extra>
+      <div class="flex items-center gap-2 mr-auto ml-3">
+        <span class="text-sm text-gray-500">{{ dayScheduledPosts.length }} shown</span>
+        <button
+          @click="showDayCancelled = !showDayCancelled"
+          :class="[
+            'text-xs px-2 py-0.5 rounded-full font-medium transition-colors',
+            showDayCancelled ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-400 hover:bg-gray-200',
+          ]"
+        >
+          {{ showDayCancelled ? 'Hide cancelled' : 'Show cancelled' }}
+        </button>
       </div>
-    </div>
-  </Teleport>
+    </template>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       New Schedule Modal
-  ════════════════════════════════════════════════════════════════════════════ -->
-  <Teleport to="body">
-    <div v-if="showScheduleModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" @click="closeScheduleModal" />
+    <div class="space-y-3">
+      <div v-if="!dayScheduledPosts.length" class="text-center py-6 text-gray-400">
+        <svg class="mx-auto size-10 text-gray-200 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h12M6 12h8m-8 6h12"/></svg>
+        <p class="text-sm">No posts scheduled for this day</p>
+      </div>
 
-      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-          <h3 class="text-lg font-semibold text-gray-900">Schedule Post</h3>
-          <button @click="closeScheduleModal" class="size-8 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
-            <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-
-          <!-- Select Post -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">
-              Post <span class="text-red-500">*</span>
-            </label>
-            <select
-              v-model="scheduleForm.postId"
-              class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option :value="null" disabled>Select a draft post…</option>
-              <option v-for="post in draftPosts" :key="post.id" :value="post.id">
-                {{ post.title }}
-              </option>
-            </select>
-            <p v-if="!draftPosts.length" class="mt-1.5 text-xs text-amber-600">
-              No draft posts available.
-              <router-link to="/posts/create" class="underline" @click="closeScheduleModal">Create one first.</router-link>
+      <div
+        v-for="sp in dayScheduledPosts"
+        :key="sp.id"
+        class="bg-gray-50 rounded-xl p-4 border border-gray-100"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 truncate">
+              {{ sp.title ?? sp.post?.title ?? `Post #${sp.postId}` }}
             </p>
-            <p v-if="scheduleErrors.postId" class="mt-1 text-xs text-red-500">{{ scheduleErrors.postId }}</p>
+            <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ sp.post?.content }}</p>
           </div>
-
-          <!-- Social accounts checkboxes -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Publish to <span class="text-red-500">*</span>
-            </label>
-
-            <div v-if="!scheduleStore.socialAccounts.length" class="text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-2.5 border border-amber-100">
-              No linked social accounts yet. Connect an account first.
-            </div>
-
-            <div v-else class="space-y-2">
-              <label
-                v-for="account in scheduleStore.socialAccounts"
-                :key="account.id"
-                :class="[
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-colors',
-                  scheduleForm.selectedAccountIds.includes(account.id)
-                    ? 'border-indigo-300 bg-indigo-50'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50',
-                  !account.isActive || !account.platform?.isActive ? 'opacity-50 cursor-not-allowed' : '',
-                ]"
-              >
-                <input
-                  type="checkbox"
-                  :checked="scheduleForm.selectedAccountIds.includes(account.id)"
-                  :disabled="!account.isActive || !account.platform?.isActive"
-                  @change="toggleAccount(account.id)"
-                  class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span class="text-base leading-none">{{ platformIcon(account.platform?.platform ?? '') }}</span>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900">{{ account.username }}</p>
-                  <p class="text-xs text-gray-500 capitalize">{{ account.platform?.platform }}</p>
-                </div>
-                <span
-                  v-if="!account.isActive"
-                  class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full"
-                >
-                  Disconnected
-                </span>
-                <span
-                  v-else-if="!account.platform?.isActive"
-                  class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full"
-                >
-                  Inactive
-                </span>
-              </label>
-            </div>
-            <p v-if="scheduleErrors.accounts" class="mt-1 text-xs text-red-500">{{ scheduleErrors.accounts }}</p>
-          </div>
-
-          <!-- Post type -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">Post Type</label>
-            <div class="flex gap-2">
-              <button
-                v-for="type in ['text', 'link', 'image']"
-                :key="type"
-                :disabled="['link', 'image'].includes(type)"
-                type="button"
-                @click="scheduleForm.postType = type as any"
-                :class="[
-                  'flex-1 py-2 text-sm font-medium rounded-lg border transition-colors capitalize',
-                  scheduleForm.postType === type
-                    ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50',
-                  ['link', 'image'].includes(type) ? 'cursor-not-allowed opacity-50' : '',  
-                ]"
-              >
-                {{ type }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Date & time -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">
-              Schedule date & time <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="scheduleForm.time"
-              type="datetime-local"
-              :min="minTimeForDate"
-              class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-            <p class="mt-1 text-xs text-gray-400">Cannot schedule in the past or within the next 5 minutes</p>
-            <p v-if="scheduleErrors.time" class="mt-1 text-xs text-red-500">{{ scheduleErrors.time }}</p>
-          </div>
-
+          <span :class="['shrink-0 text-xs px-2 py-0.5 rounded-full font-medium', statusClass(sp.publishStatus)]">
+            {{ sp.publishStatus }}
+          </span>
         </div>
-
-        <!-- Footer -->
-        <div class="px-6 py-4 border-t border-gray-100 flex items-center gap-3 shrink-0">
+        <div class="flex items-center justify-between mt-3">
+          <div class="flex items-center gap-1.5 text-xs text-gray-500">
+            <span>{{ platformIcon(sp.socialAccount?.platform?.platform ?? '') }}</span>
+            <span class="font-medium">{{ sp.socialAccount?.username }}</span>
+            <span>·</span>
+            <span>{{ formatTime(sp.scheduledAt) }}</span>
+          </div>
           <button
-            @click="handleScheduleSubmit"
-            :disabled="scheduleSaving"
-            class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors"
-          >
-            {{ scheduleSaving ? 'Scheduling…' : 'Schedule Post' }}
-          </button>
-          <button
-            @click="closeScheduleModal"
-            class="px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors"
+            v-if="canCancelScheduledPost(sp)"
+            @click="handleCancelSchedule(sp.id)"
+            class="text-xs text-red-500 hover:text-red-700 transition-colors"
           >
             Cancel
           </button>
         </div>
       </div>
     </div>
-  </Teleport>
+
+    <template v-if="!isDisabled" #footer>
+      <Button class="w-full" @click="openNewSchedule">
+        <svg class="size-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Schedule a post for this day
+      </Button>
+    </template>
+  </AppModal>
+
+  <!-- New Schedule Modal -->
+  <AppModal v-model="showScheduleModal" title="Schedule Post">
+    <div class="space-y-5">
+
+      <!-- Select Post -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+          Post <span class="text-red-500">*</span>
+        </label>
+        <select
+          v-model="scheduleForm.postId"
+          class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+        >
+          <option :value="null" disabled>Select a draft post…</option>
+          <option v-for="post in draftPosts" :key="post.id" :value="post.id">
+            {{ post.title }}
+          </option>
+        </select>
+        <p v-if="!draftPosts.length" class="mt-1.5 text-xs text-amber-600">
+          No draft posts available.
+          <router-link to="/posts/create" class="underline" @click="closeScheduleModal">Create one first.</router-link>
+        </p>
+        <p v-if="scheduleErrors.postId" class="mt-1 text-xs text-red-500">{{ scheduleErrors.postId }}</p>
+      </div>
+
+      <!-- Social accounts checkboxes -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Publish to <span class="text-red-500">*</span>
+        </label>
+
+        <div v-if="!scheduleStore.socialAccounts.length" class="text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-2.5 border border-amber-100">
+          No linked social accounts yet. Connect an account first.
+        </div>
+
+        <div v-else class="space-y-2">
+          <label
+            v-for="account in scheduleStore.socialAccounts"
+            :key="account.id"
+            :class="[
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-colors',
+              scheduleForm.selectedAccountIds.includes(account.id)
+                ? 'border-indigo-300 bg-indigo-50'
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50',
+              !account.isActive || !account.platform?.isActive ? 'opacity-50 cursor-not-allowed' : '',
+            ]"
+          >
+            <input
+              type="checkbox"
+              :checked="scheduleForm.selectedAccountIds.includes(account.id)"
+              :disabled="!account.isActive || !account.platform?.isActive"
+              @change="toggleAccount(account.id)"
+              class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span class="text-base leading-none">{{ platformIcon(account.platform?.platform ?? '') }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900">{{ account.username }}</p>
+              <p class="text-xs text-gray-500 capitalize">{{ account.platform?.platform }}</p>
+            </div>
+            <span v-if="!account.isActive" class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Disconnected</span>
+            <span v-else-if="!account.platform?.isActive" class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Inactive</span>
+          </label>
+        </div>
+        <p v-if="scheduleErrors.accounts" class="mt-1 text-xs text-red-500">{{ scheduleErrors.accounts }}</p>
+      </div>
+
+      <!-- Post type -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Post Type</label>
+        <div class="flex gap-2">
+          <button
+            v-for="type in ['text', 'link', 'image']"
+            :key="type"
+            :disabled="['link', 'image'].includes(type)"
+            type="button"
+            @click="scheduleForm.postType = type as any"
+            :class="[
+              'flex-1 py-2 text-sm font-medium rounded-lg border transition-colors capitalize',
+              scheduleForm.postType === type ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50',
+              ['link', 'image'].includes(type) ? 'cursor-not-allowed opacity-50' : '',
+            ]"
+          >{{ type }}</button>
+        </div>
+      </div>
+
+      <!-- Date & time -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+          Schedule date & time <span class="text-red-500">*</span>
+        </label>
+        <input
+          v-model="scheduleForm.time"
+          type="datetime-local"
+          :min="minTimeForDate"
+          class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+        />
+        <p class="mt-1 text-xs text-gray-400">Cannot schedule in the past or within the next 5 minutes</p>
+        <p v-if="scheduleErrors.time" class="mt-1 text-xs text-red-500">{{ scheduleErrors.time }}</p>
+      </div>
+
+    </div>
+
+    <template #footer>
+      <div class="flex items-center gap-3">
+        <Button :loading="scheduleSaving" class="flex-1" @click="handleScheduleSubmit">Schedule Post</Button>
+        <Button variant="secondary" @click="closeScheduleModal">Cancel</Button>
+      </div>
+    </template>
+  </AppModal>
 </template>
 
 <style>

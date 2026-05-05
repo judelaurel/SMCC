@@ -2,6 +2,7 @@ import Post from '#models/post';
 import BrandMember from '#models/brand_member';
 import ScheduledPost from '#models/scheduled_post';
 import SocialAccount from '#models/social_account';
+import CacheService from '#services/cache_service';
 import { createScheduledPostValidator } from '#validators/scheduled_post/create_update_validator';
 import ForbiddenException from '#exceptions/forbidden_exception';
 import { HttpContext } from '@adonisjs/core/http';
@@ -69,6 +70,12 @@ export default class StoreController {
     // Update the post state to 'scheduled'
     post.state = 'scheduled';
     await post.save();
+
+    await CacheService.invalidate(
+      `cache:schedules:b:${post.brandId}`,
+      'cache:schedules:u:*',
+      `cache:posts:b:${post.brandId}:*`,
+    );
 
     return response.status(201).json({
       status: 'success',

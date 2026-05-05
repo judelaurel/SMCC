@@ -1,4 +1,5 @@
 import SocialAccount from '#models/social_account';
+import CacheService, { CacheKey } from '#services/cache_service';
 import { createSocialAccountValidator } from '#validators/social_account/create_validator';
 import { HttpContext } from '@adonisjs/core/http';
 import { DateTime } from 'luxon';
@@ -28,6 +29,11 @@ export default class StoreController {
         })
         .save();
 
+      await CacheService.invalidate(
+        CacheKey.socialAccounts(user.id),
+        `cache:schedules:u:${user.id}`,
+      );
+
       return response.status(200).json({
         status: 'success',
         message: 'Social account updated successfully',
@@ -45,6 +51,11 @@ export default class StoreController {
       expiresAt: payload.expiresAt ? DateTime.fromISO(payload.expiresAt) : null,
       scope: payload.scope ?? null,
     });
+
+    await CacheService.invalidate(
+      CacheKey.socialAccounts(user.id),
+      `cache:schedules:u:${user.id}`,
+    );
 
     return response.status(201).json({
       status: 'success',

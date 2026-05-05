@@ -1,5 +1,6 @@
 import Brand from '#models/brand';
 import BrandMember from '#models/brand_member';
+import CacheService, { CacheKey } from '#services/cache_service';
 import { createBrandValidator } from '#validators/brand/create_validator';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -23,6 +24,8 @@ export default class StoreController {
       role: 'owner',
       addedBy: user.id,
     });
+
+    await CacheService.invalidate(CacheKey.brands(user.id));
 
     return response.status(201).json({
       status: 'success',

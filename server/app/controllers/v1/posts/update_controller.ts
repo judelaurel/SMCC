@@ -1,6 +1,7 @@
 import NotFoundException from '#exceptions/not_found_exception';
 import Post from '#models/post';
 import BrandMember from '#models/brand_member';
+import CacheService from '#services/cache_service';
 import { updatePostValidator } from '#validators/post/update_validator';
 import { HttpContext } from '@adonisjs/core/http';
 import ScheduledPost from '#models/scheduled_post';
@@ -48,6 +49,11 @@ export default class UpdateController {
         await schedulePosts.save();
       }
     }
+
+    await CacheService.invalidate(
+      `cache:posts:b:${post.brandId}:*`,
+      `cache:schedules:b:${post.brandId}`,
+    );
 
     return response.ok({
       status: 'success',

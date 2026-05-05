@@ -34,12 +34,12 @@ export default class PublishPost extends Job<PublishPostPayload> {
 
     const post = await Post.findOrFail(postId);
 
-    // Skip if the post was deleted (archived) before the job ran
-    if (post.state === 'archived') {
+    // Skip if the post was deleted (trash) before the job ran
+    if (post.state === 'trash') {
       scheduledPost.publishStatus = 'cancelled';
       await scheduledPost.save();
       logger.info(
-        `Skipping publish for scheduledPostId ${scheduledPostId} — post ${postId} is archived`,
+        `Skipping publish for scheduledPostId ${scheduledPostId} — post ${postId} is trash`,
       );
       return;
     }

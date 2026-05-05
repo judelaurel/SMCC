@@ -141,13 +141,13 @@ async function handleRemoveMember(member: IBrandMember) {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function roleClass(role: string) {
+function roleBadgeVariant(role: string): string {
   const map: Record<string, string> = {
-    owner: 'bg-amber-100 text-amber-800',
-    admin: 'bg-blue-100 text-blue-800',
-    member: 'bg-gray-100 text-gray-800',
+    owner: 'amber',
+    admin: 'info',
+    member: 'neutral',
   }
-  return map[role] ?? 'bg-gray-100 text-gray-800'
+  return map[role] ?? 'neutral'
 }
 
 function displayName(member: IBrandMember): string {
@@ -165,32 +165,20 @@ function isCurrentUser(member: IBrandMember): boolean {
 <template>
   <div>
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <router-link
-          to="/brands"
-          class="text-gray-400 hover:text-gray-600 transition-colors"
+    <PageHeader :title="`${brand?.name ?? 'Brand'} — Members`" back-to="/brands">
+      <template #actions>
+        <button
+          v-if="canAddMembers"
+          @click="openAddModal"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
         >
-          <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-        </router-link>
-        <h1 class="text-2xl font-bold text-gray-900">
-          {{ brand?.name ?? 'Brand' }} — Members
-        </h1>
-      </div>
-
-      <button
-        v-if="canAddMembers"
-        @click="openAddModal"
-        class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-      >
-        <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        Add Member
-      </button>
-    </div>
+          Add Member
+        </button>
+      </template>
+    </PageHeader>
 
     <!-- Loading -->
     <div v-if="loading" class="text-gray-400">Loading...</div>
@@ -204,7 +192,7 @@ function isCurrentUser(member: IBrandMember): boolean {
         <p class="text-lg font-medium text-gray-700 mb-2">No members</p>
         <p>This brand doesn't have any members yet.</p>
       </div>
-
+      
       <!-- Members table -->
       <div
         v-else
@@ -256,11 +244,9 @@ function isCurrentUser(member: IBrandMember): boolean {
 
               <!-- Role badge -->
               <td class="px-5 py-3">
-                <span
-                  :class="['inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize', roleClass(member.role)]"
-                >
+                <AppBadge :variant="roleBadgeVariant(member.role)">
                   {{ member.role }}
-                </span>
+                </AppBadge>
               </td>
 
               <!-- Actions -->
@@ -292,135 +278,67 @@ function isCurrentUser(member: IBrandMember): boolean {
     </template>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       Add Member Modal
-  ════════════════════════════════════════════════════════════════════════════ -->
-  <Teleport to="body">
-    <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" @click="showAddModal = false" />
-
-      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 class="text-lg font-semibold text-gray-900">Add Member</h3>
-          <button @click="showAddModal = false" class="size-8 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
-            <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <!-- Body -->
-        <div class="px-6 py-5 space-y-4">
-          <!-- User select -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">
-              User <span class="text-red-500">*</span>
-            </label>
-            <div v-if="availableLoading" class="text-sm text-gray-400">Loading users…</div>
-            <template v-else>
-              <select
-                v-model="addForm.userId"
-                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option :value="null" disabled>Select a user…</option>
-                <option v-for="u in availableUsers" :key="u.id" :value="u.id">
-                  {{ u.firstName ? `${u.firstName} ${u.lastName ?? ''}`.trim() : u.username }} ({{ u.email }})
-                </option>
-              </select>
-              <p v-if="!availableUsers.length" class="mt-1.5 text-xs text-gray-500">No available users to invite.</p>
-            </template>
-          </div>
-
-          <!-- Role select -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">
-              Role <span class="text-red-500">*</span>
-            </label>
-            <select
-              v-model="addForm.role"
-              class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option v-for="r in assignableRoles" :key="r.value" :value="r.value">
-                {{ r.label }}
-              </option>
-            </select>
-          </div>
-
-          <p v-if="addError" class="text-xs text-red-500">{{ addError }}</p>
-        </div>
-
-        <!-- Footer -->
-        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
-          <button
-            @click="showAddModal = false"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+  <!-- Add Member Modal -->
+  <AppModal v-model="showAddModal" title="Add Member">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+          User <span class="text-red-500">*</span>
+        </label>
+        <div v-if="availableLoading" class="text-sm text-gray-400">Loading users…</div>
+        <template v-else>
+          <select
+            v-model="addForm.userId"
+            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
           >
-            Cancel
-          </button>
-          <button
-            @click="handleAddMember"
-            :disabled="addSaving || !addForm.userId"
-            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {{ addSaving ? 'Adding…' : 'Add Member' }}
-          </button>
-        </div>
+            <option :value="null" disabled>Select a user…</option>
+            <option v-for="u in availableUsers" :key="u.id" :value="u.id">
+              {{ u.firstName ? `${u.firstName} ${u.lastName ?? ''}`.trim() : u.username }} ({{ u.email }})
+            </option>
+          </select>
+          <p v-if="!availableUsers.length" class="mt-1.5 text-xs text-gray-500">No available users to invite.</p>
+        </template>
       </div>
+
+      <AppSelect
+        label="Role"
+        required
+        v-model="addForm.role"
+        :options="assignableRoles"
+      />
+
+      <p v-if="addError" class="text-xs text-red-500">{{ addError }}</p>
     </div>
-  </Teleport>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       Edit Role Modal
-  ════════════════════════════════════════════════════════════════════════════ -->
-  <Teleport to="body">
-    <div v-if="showEditModal && editTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" @click="showEditModal = false" />
-
-      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 class="text-lg font-semibold text-gray-900">Edit Role</h3>
-          <button @click="showEditModal = false" class="size-8 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
-            <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <!-- Body -->
-        <div class="px-6 py-5 space-y-4">
-          <p class="text-sm text-gray-600">
-            Changing role for
-            <span class="font-semibold text-gray-900">{{ displayName(editTarget) }}</span>
-          </p>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">New Role</label>
-            <select
-              v-model="editRole"
-              class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option v-for="r in assignableRoles" :key="r.value" :value="r.value">
-                {{ r.label }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
-          <button
-            @click="showEditModal = false"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            @click="handleUpdateRole"
-            :disabled="editSaving"
-            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {{ editSaving ? 'Saving…' : 'Save' }}
-          </button>
-        </div>
+    <template #footer>
+      <div class="flex items-center justify-end gap-3">
+        <Button variant="secondary" @click="showAddModal = false">Cancel</Button>
+        <Button :loading="addSaving" :disabled="!addForm.userId" @click="handleAddMember">
+          Add Member
+        </Button>
       </div>
+    </template>
+  </AppModal>
+
+  <!-- Edit Role Modal -->
+  <AppModal v-model="showEditModal" title="Edit Role" max-width="sm">
+    <div class="space-y-4">
+      <p class="text-sm text-gray-600">
+        Changing role for
+        <span class="font-semibold text-gray-900">{{ editTarget ? displayName(editTarget) : '' }}</span>
+      </p>
+      <AppSelect
+        label="New Role"
+        v-model="editRole"
+        :options="assignableRoles"
+      />
     </div>
-  </Teleport>
+
+    <template #footer>
+      <div class="flex items-center justify-end gap-3">
+        <Button variant="secondary" @click="showEditModal = false">Cancel</Button>
+        <Button :loading="editSaving" @click="handleUpdateRole">Save</Button>
+      </div>
+    </template>
+  </AppModal>
 </template>

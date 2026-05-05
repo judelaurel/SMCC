@@ -7,8 +7,11 @@ import type {
   IUpdateBrandMember,
 } from '@/types/brand/BrandTypes';
 
-export function getBrands(): Promise<AxiosResponse> {
-  return axios.get('api/v1/brands');
+export function getBrands(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<AxiosResponse> {
+  return axios.get('api/v1/brands', { params });
 }
 
 export function getBrand(id: number): Promise<AxiosResponse> {

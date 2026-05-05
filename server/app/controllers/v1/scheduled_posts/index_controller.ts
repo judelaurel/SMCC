@@ -1,5 +1,6 @@
 import ScheduledPost from '#models/scheduled_post';
 import BrandMember from '#models/brand_member';
+import CacheService, { CacheKey, CacheTTL } from '#services/cache_service';
 import ForbiddenException from '#exceptions/forbidden_exception';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -8,13 +9,19 @@ export default class IndexController {
     const user = auth.getUserOrFail();
     const brandId = request.input('brandId');
 
+    const cacheKey = brandId
+      ? CacheKey.schedules(Number(brandId))
+      : CacheKey.schedulesUser(user.id);
+
+    const cached = await CacheService.get(cacheKey);
+    if (cached) return response.status(200).json(cached);
+
     let postsQuery = ScheduledPost.query()
       .preload('socialAccount', q => q.preload('platform'))
       .preload('post')
       .orderBy('scheduledAt', 'asc');
 
     if (brandId) {
-      // Verify user is a member of this brand
       const membership = await BrandMember.query()
         .where('brandId', brandId)
         .where('userId', user.id)
@@ -24,12 +31,10 @@ export default class IndexController {
         throw new ForbiddenException('You are not a member of this brand');
       }
 
-      // Return all scheduled posts for posts belonging to this brand
       postsQuery = postsQuery.whereHas('post', q =>
         q.where('brandId', brandId),
       );
     } else {
-      // Fallback: only return scheduled posts from the user's own social accounts
       postsQuery = postsQuery.whereHas('socialAccount', q =>
         q.where('userId', user.id),
       );
@@ -37,10 +42,13 @@ export default class IndexController {
 
     const posts = await postsQuery;
 
-    return response.status(200).json({
+    const result = {
       status: 'success',
       message: 'Scheduled posts retrieved successfully',
       data: posts,
-    });
+    };
+
+    await CacheService.set(cacheKey, result, CacheTTL.schedules);
+    return response.status(200).json(result);
   }
 }

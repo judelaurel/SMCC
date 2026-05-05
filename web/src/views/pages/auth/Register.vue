@@ -83,21 +83,76 @@ async function handleSubmit() {
       <form @submit.prevent="handleSubmit" class="space-y-3">
         <!-- Name row -->
         <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-gray-700">First Name</label>
-            <input
-              v-model="form.firstName"
-              type="text"
-              autocomplete="given-name"
-              placeholder="John"
-              :class="[
-                'rounded-lg border text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition',
-                errors.firstName ? 'border-red-300 bg-red-50' : 'border-gray-300',
-              ]"
-            />
-            <p v-if="errors.firstName" class="text-xs text-red-500">{{ errors.firstName }}</p>
-          </div>
-          <div class="flex flex-col gap-1">
+          <FormField
+            label="First Name"
+            v-model="form.firstName"
+            type="text"
+            autocomplete="given-name"
+            placeholder="John"
+            :error="errors.firstName"
+          />
+          <FormField
+            label="Last Name"
+            v-model="form.lastName"
+            type="text"
+            autocomplete="family-name"
+            placeholder="Doe"
+            :error="errors.lastName"
+          />
+        </div>
+
+        <FormField
+          label="Email"
+          v-model="form.email"
+          type="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          :error="errors.email"
+        />
+        <FormField
+          label="Username"
+          v-model="form.username"
+          type="text"
+          autocomplete="username"
+          placeholder="johndoe"
+          :error="errors.username"
+        />
+
+        <!-- Password row -->
+        <div class="grid grid-cols-2 gap-3">
+          <FormField
+            label="Password"
+            v-model="form.password"
+            type="password"
+            autocomplete="new-password"
+            placeholder="••••••••"
+            :error="errors.password"
+          />
+          <FormField
+            label="Confirm Password"
+            v-model="form.passwordConfirmation"
+            type="password"
+            autocomplete="new-password"
+            placeholder="••••••••"
+            :error="errors.passwordConfirmation"
+          />
+        </div>
+
+        <!-- Server error -->
+        <div
+          v-if="serverError"
+          class="flex items-center gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
+        >
+          <svg class="size-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <span>{{ typeof serverError === 'string' ? serverError : (serverError as any)?.errors?.[0]?.message ?? 'Something went wrong' }}</span>
+        </div>
+
+        <Button type="submit" :loading="loading" class="w-full">
+          {{ loading ? 'Creating account…' : 'Create account' }}
+        </Button>
+      </form>
             <label class="text-sm font-medium text-gray-700">Last Name</label>
             <input
               v-model="form.lastName"

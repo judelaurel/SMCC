@@ -1,4 +1,5 @@
 import SocialAccount from '#models/social_account';
+import CacheService, { CacheKey } from '#services/cache_service';
 import { HttpContext } from '@adonisjs/core/http';
 
 export default class DestroyController {
@@ -12,6 +13,11 @@ export default class DestroyController {
 
     account.isActive = false;
     await account.save();
+
+    await CacheService.invalidate(
+      CacheKey.socialAccounts(user.id),
+      `cache:schedules:u:${user.id}`,
+    );
 
     return response.status(200).json({
       status: 'success',

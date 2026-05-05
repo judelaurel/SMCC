@@ -1,34 +1,31 @@
-# Social Media Content Calendar + AI Post Generator
+# Social Media Content Calendar
 
-> **Signal Raptor Dev Bootcamp — April 2026**
-> Brand Tools · Week 2 of 4
+> Signal Raptor Dev Bootcamp — April 2026
 
 ![AdonisJS](https://img.shields.io/badge/AdonisJS-6-5A45FF?logo=adonisjs&logoColor=white)
 ![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?logo=vuedotjs&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
+![Ollama](https://img.shields.io/badge/Ollama-llama3.2-000000?logo=ollama&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Claude](https://img.shields.io/badge/Anthropic-Claude-191919?logo=anthropic&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 
-A full-stack web application that helps content creators plan, schedule, and generate social media posts using AI. Users manage multiple brands, each with its own tone of voice and connected social platforms. A single click generates three Claude-powered post variations — solving the blank-page problem for marketers.
+A full-stack app for planning, scheduling, and AI-generating social media posts. Users manage multiple brands, connect social accounts (Mastodon OAuth), and let a local Ollama model write platform-specific post variations.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | Vue 3 · Vite · Pinia · Vue Router |
-| **Backend** | AdonisJS 6 (Node 24, ESM) |
-| **ORM** | Lucid (AdonisJS) |
-| **Validation** | VineJS |
-| **Database** | PostgreSQL 15 |
-| **Cache / Sessions** | Redis 7 |
-| **AI** | Anthropic Claude API |
-| **Auth** | AdonisJS Access Token Guard |
-| **Type-safe Client** | Tuyau (`@tuyau/core`) |
-| **DevOps** | Docker Compose · dumb-init · dockerize |
+| Layer             | Technology                                        |
+| ----------------- | ------------------------------------------------- |
+| **Frontend**      | Vue 3 · Vite · Pinia · Vue Router · Tailwind CSS  |
+| **Backend**       | AdonisJS 6 (Node 22, ESM, TypeScript)             |
+| **Database**      | PostgreSQL 15 — Lucid ORM + VineJS validation     |
+| **Cache / Queue** | Redis 7 — API response caching + BullMQ job queue |
+| **AI**            | Ollama (llama3.2) via OpenAI-compatible API       |
+| **Auth**          | AdonisJS Access Token Guard                       |
+| **OAuth**         | Mastodon OAuth 2                                  |
+| **DevOps**        | Docker Compose · dumb-init · dockerize            |
 
 ---
 
@@ -36,55 +33,58 @@ A full-stack web application that helps content creators plan, schedule, and gen
 
 ```
 SMCC/
-├── docker-compose.yml          # Orchestrates all services
-├── README.md
-│
-├── server/                     # AdonisJS 6 API
-│   ├── Dockerfile              # Multi-stage build (dev → build → prod)
-│   ├── adonisrc.ts
-│   ├── ace.js
-│   ├── package.json
-│   ├── tsconfig.json
+├── docker-compose.yml
+├── server/                         # AdonisJS 6 API
 │   ├── app/
 │   │   ├── controllers/v1/
-│   │   │   ├── auth/           # login, logout, register ✅
-│   │   │   ├── users/          # me ✅
-│   │   │   ├── brands/         # CRUD 🚧
-│   │   │   ├── platforms/      # brand platforms 🚧
-│   │   │   └── posts/          # posts + AI generate 🚧
+│   │   │   ├── auth/               # login · register · logout
+│   │   │   ├── users/              # me · profile · password · oauth/mastodon
+│   │   │   ├── brands/             # CRUD + brand_members sub-resource
+│   │   │   ├── posts/              # CRUD + AI generate
+│   │   │   ├── scheduled_posts/    # schedule · cancel · calendar feed
+│   │   │   ├── social_accounts/    # connect · disconnect
+│   │   │   ├── social_platforms/   # platform registry
+│   │   │   └── platforms/          # per-brand platform list
+│   │   ├── models/                 # User · Brand · Post · ScheduledPost · SocialAccount · BrandMember
+│   │   ├── services/
+│   │   │   ├── ai/                 # Ollama wrapper (OpenAI-compat client)
+│   │   │   ├── cache_service.ts    # Redis get / set / invalidate helpers
+│   │   │   ├── oauth/              # Mastodon OAuth flow
+│   │   │   └── platform/           # publish adapters
 │   │   ├── middleware/
-│   │   ├── models/             # User ✅ · Brand · Post 🚧
-│   │   ├── transformers/
+│   │   ├── jobs/                   # BullMQ: publish_post
 │   │   └── validators/
-│   ├── config/
 │   ├── database/
-│   │   └── migrations/         # users ✅ · access_tokens ✅ · brands · posts 🚧
-│   ├── providers/
+│   │   ├── migrations/
+│   │   └── seeders/
+│   ├── config/
 │   └── start/
 │       ├── routes.ts
-│       ├── kernel.ts
-│       └── env.ts
+│       ├── env.ts
+│       └── scheduler.ts            # cron: process due scheduled posts
 │
-└── web/                        # Vue 3 frontend 🚧
-    └── (Vite + Pinia + Vue Router — Week 3)
+└── web/                            # Vue 3 SPA
+    └── src/
+        ├── views/pages/            # Calendar · Brands · Posts · BrandMembers · Settings
+        ├── components/common/      # Button · FormField · AppModal · AppBadge · AppSelect · PageHeader
+        ├── stores/                 # Pinia: auth · brand · post · scheduled_post
+        └── api/services/           # Axios service layer
 ```
-
-> ✅ Implemented &nbsp;·&nbsp; 🚧 Planned
 
 ---
 
 ## Docker Setup
 
-Services defined in `docker-compose.yml`:
+Four services defined in `docker-compose.yml`:
 
-| Service | Image | Container | Ports | Notes |
-|---|---|---|---|---|
-| `postgres` | `postgres:15` | `smcc_postgres` | `5433:5432` | Volume: `postgres_volume` |
-| `redis` | `redis:7` | `smcc_redis` | `6379:6379` | Password protected; healthcheck |
-| `server` | Built from `./server` | `smcc_server` | `8000:8000` · `9229:9229` | Waits for postgres + redis via `dockerize` |
-| `frontend` | Built from `./web` | `smcc_frontend` | `3000:80` | Vue via nginx 🚧 |
+| Service    | Image                  | Port(s)                 | Notes                                                                           |
+| ---------- | ---------------------- | ----------------------- | ------------------------------------------------------------------------------- |
+| `postgres` | `postgres:15`          | `5433:5432`             | volume: `postgres_volume`                                                       |
+| `redis`    | `redis:7`              | `6379:6379`             | password: `adonis`; healthcheck                                                 |
+| `server`   | built from `./server`  | `8000` · `9229 (debug)` | waits for postgres + redis via `dockerize`; hot-reload with `ace serve --watch` |
+| `ollama`   | `ollama/ollama:latest` | `11434`                 | auto-pulls `llama3.2` on first start; volume: `ollama_volume`                   |
 
-The API server uses `dockerize` to wait for both postgres and redis to be ready before starting, preventing race-condition boot failures.
+> **First run:** Ollama pulls llama3.2 (~2 GB) at startup — this takes a few minutes. Subsequent starts are instant.
 
 ### Start everything
 
@@ -92,21 +92,19 @@ The API server uses `dockerize` to wait for both postgres and redis to be ready 
 docker compose up
 ```
 
-### Start with rebuild
+### Rebuild containers
 
 ```bash
 docker compose up --build
 ```
 
-### Teardown (keep volumes)
+### Teardown
 
 ```bash
+# keep volumes (data preserved)
 docker compose down
-```
 
-### Teardown (destroy volumes)
-
-```bash
+# destroy everything including volumes
 docker compose down -v
 ```
 
@@ -116,10 +114,9 @@ docker compose down -v
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Node.js 24+ (for local dev without Docker)
+- Docker & Docker Compose
 
-### 1. Clone the repo
+### 1. Clone
 
 ```bash
 git clone <repo-url>
@@ -132,15 +129,34 @@ cd SMCC
 cp server/.env.example server/.env
 ```
 
-Edit `server/.env` and fill in the values (see [Environment Variables](#environment-variables) below).
+Minimum required values (defaults match the Docker Compose config):
 
 ```env
-DB_CONNECTION=pg
+NODE_ENV=development
+PORT=8000
+HOST=0.0.0.0
+LOG_LEVEL=info
+APP_KEY=                          # run: node ace generate:key
+APP_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:5173
+
+DATABASE_URL=postgresql://adonis:adonis@postgres:5432/smcc_db
 DB_HOST=postgres
-DB_PORT=5433
+DB_PORT=5432
 DB_USER=adonis
 DB_PASSWORD=adonis
 DB_DATABASE=smcc_db
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=adonis
+
+SESSION_DRIVER=cookie
+QUEUE_DRIVER=redis
+
+# Ollama (points to the ollama container)
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama3.2
 ```
 
 ### 3. Start the stack
@@ -149,11 +165,9 @@ DB_DATABASE=smcc_db
 docker compose up
 ```
 
-The API will be available at `http://localhost:8000`.
+API available at `http://localhost:8000`.
 
 ### 4. Run migrations
-
-In a separate terminal once the server container is up:
 
 ```bash
 docker compose exec server node ace migration:run
@@ -165,6 +179,21 @@ docker compose exec server node ace migration:run
 docker compose exec server node ace db:seed
 ```
 
+---
+
+## Key Features
+
+- **Brands** — create brands with name, tone of voice, logo, primary colour and description
+- **Brand Members** — invite users with `owner` / `editor` / `viewer` roles; RBAC enforced on every endpoint
+- **Posts** — draft posts per brand; track state (`draft → published / failed`)
+- **AI Post Generation** — send topic + platform + tone to Ollama; get three ready-to-post variations back instantly
+- **Scheduled Posts** — schedule a post to a connected social account at a specific datetime; background cron processes due items via BullMQ
+- **Calendar View** — month/week/day FullCalendar showing all scheduled posts; click a day to view, cancel, or add new schedules
+- **Social Accounts** — connect Mastodon accounts via OAuth 2; soft-disconnect preserves scheduling history
+- **Redis Caching** — index endpoints cached (2–5 min TTL); mutations invalidate related keys automatically
+
+---
+
 ## System Design
 
-Full system design documentation: [View on Proton Drive](https://drive.proton.me/urls/VA648KSM30#Qswqd6iEoqyW)
+Full system design documentation: [View on Proton Drive](https://drive.proton.me/urls/NYH9HT2MMW#bUHHVuL85kwG)

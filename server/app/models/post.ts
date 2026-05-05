@@ -47,7 +47,7 @@ export default class Post extends BaseModel {
   declare content: string;
 
   @column()
-  declare state: 'draft' | 'scheduled' | 'completed' | 'archived';
+  declare state: 'draft' | 'scheduled' | 'completed' | 'trash';
 
   @column()
   declare isAiGenerated: boolean;

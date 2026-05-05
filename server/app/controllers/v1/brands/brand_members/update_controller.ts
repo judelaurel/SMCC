@@ -1,5 +1,6 @@
 import BrandMember from '#models/brand_member';
 import ForbiddenException from '#exceptions/forbidden_exception';
+import CacheService from '#services/cache_service';
 import { updateBrandMemberValidator } from '#validators/brand/brand_member_validator';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -44,6 +45,8 @@ export default class UpdateController {
     targetMember.role = payload.role;
     await targetMember.save();
     await targetMember.load('user');
+
+    await CacheService.invalidate(`cache:members:b:${brandId}:*`);
 
     return response.status(200).json({
       status: 'success',

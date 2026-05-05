@@ -1,4 +1,5 @@
 import SocialPlatform from '#models/social_platform';
+import CacheService, { CacheKey } from '#services/cache_service';
 import { mastodonOAuthService } from '#services/oauth/mastodon_oauth_service';
 import { oauthStateService } from '#services/oauth/oauth_state_service';
 import { HttpContext } from '@adonisjs/core/http';
@@ -26,6 +27,11 @@ export default class RedirectController {
     if (existingAccount) {
       existingAccount.isActive = true;
       await existingAccount.save();
+
+      await CacheService.invalidate(
+        CacheKey.socialAccounts(user.id),
+        `cache:schedules:u:${user.id}`,
+      );
 
       return response.status(200).json({
         status: 'success',
