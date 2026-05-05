@@ -4,7 +4,7 @@ export interface IPost {
   createdBy: number;
   title: string;
   content: string;
-  state: 'draft' | 'scheduled' | 'completed' | 'archived';
+  state: 'draft' | 'scheduled' | 'completed' | 'trash';
   isAiGenerated: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -26,6 +26,6 @@ export interface ICreatePost {
 export interface IUpdatePost {
   title?: string;
   content?: string;
-  state?: 'draft' | 'scheduled' | 'completed' | 'archived';
+  state?: 'draft' | 'scheduled' | 'completed' | 'trash';
   isAiGenerated?: boolean;
 }

@@ -4,7 +4,7 @@ const postState = vine.enum([
   'draft',
   'scheduled',
   'completed',
-  'archived',
+  'trash',
 ] as const);
 
 export const updatePostValidator = vine.create({

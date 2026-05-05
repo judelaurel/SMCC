@@ -1,4 +1,5 @@
 import BrandMember from '#models/brand_member';
+import CacheService, { CacheKey, CacheTTL } from '#services/cache_service';
 import { HttpContext } from '@adonisjs/core/http';
 
 export default class IndexController {
@@ -6,7 +7,6 @@ export default class IndexController {
     const user = auth.getUserOrFail();
     const brandId = params.brandId;
 
-    // Verify the requesting user is a member of the brand
     const membership = await BrandMember.query()
       .where('brandId', brandId)
       .where('userId', user.id)
@@ -19,18 +19,25 @@ export default class IndexController {
       });
     }
 
+    const cacheKey = CacheKey.members(Number(brandId), user.id);
+    const cached = await CacheService.get(cacheKey);
+    if (cached) return response.status(200).json(cached);
+
     const members = await BrandMember.query()
       .where('brandId', brandId)
       .preload('user')
       .orderBy('createdAt', 'asc');
 
-    return response.status(200).json({
+    const result = {
       status: 'success',
       message: 'Brand members retrieved successfully',
       data: {
         members,
         currentUserRole: membership.role,
       },
-    });
+    };
+
+    await CacheService.set(cacheKey, result, CacheTTL.members);
+    return response.status(200).json(result);
   }
 }

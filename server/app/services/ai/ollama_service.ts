@@ -64,7 +64,7 @@ const TONE_DESCRIPTORS: Record<ToneOfVoice, string> = {
     'structured, precise and respectful — appropriate for official communications',
 };
 
-export class AnthropicService {
+export class OllamaService {
   private client: OpenAI;
   private model: string;
 
@@ -87,27 +87,27 @@ export class AnthropicService {
       : '';
 
     const systemPrompt = `You are a professional social media copywriter.
-Your job is to write ${payload.platform} posts that perform well.${brandCtx}
+      Your job is to write ${payload.platform} posts that perform well.${brandCtx}
 
-Platform rules for ${payload.platform}:${platformRules}
+      Platform rules for ${payload.platform}:${platformRules}
 
-Tone of voice: ${payload.toneOfVoice} — ${toneDesc}
+      Tone of voice: ${payload.toneOfVoice} — ${toneDesc}
 
-IMPORTANT: Always respond with ONLY a valid JSON object in this exact shape — no markdown fences, no extra text:
-{
-  "variations": [
-    { "id": 1, "content": "full post text here" },
-    { "id": 2, "content": "full post text here" },
-    { "id": 3, "content": "full post text here" }
-  ]
-}`;
+      IMPORTANT: Always respond with ONLY a valid JSON object in this exact shape — no markdown fences, no extra text:
+      {
+        "variations": [
+          { "id": 1, "content": "full post text here" },
+          { "id": 2, "content": "full post text here" },
+          { "id": 3, "content": "full post text here" }
+        ]
+      }`;
 
     const userPrompt = `Write 3 distinct ${payload.platform} post variations about the following topic.
 
-Topic: ${payload.topic}
-Keywords to incorporate naturally: ${payload.keywords.join(', ')}
+    Topic: ${payload.topic}
+    Keywords to incorporate naturally: ${payload.keywords.join(', ')}
 
-Each variation should take a noticeably different angle or structure. Do not number them in the content itself.`;
+    Each variation should take a noticeably different angle or structure. Do not number them in the content itself.`;
 
     const response = await this.client.chat.completions.create({
       model: this.model,
@@ -150,4 +150,4 @@ Each variation should take a noticeably different angle or structure. Do not num
   }
 }
 
-export const anthropicService = new AnthropicService();
+export const ollamaService = new OllamaService();

@@ -1,5 +1,6 @@
 import Post from '#models/post';
 import BrandMember from '#models/brand_member';
+import CacheService, { CacheKey, CacheTTL } from '#services/cache_service';
 import { retrievePostValidator } from '#validators/post/retrieve_validator';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -10,7 +11,14 @@ export default class IndexController {
       retrievePostValidator,
     );
 
-    // Resolve the user's role in this brand
+    // Include state in cache key only when a filter is explicitly requested
+    const cacheKey = state
+      ? `${CacheKey.posts(brandId, user.id)}:s:${state}`
+      : CacheKey.posts(brandId, user.id);
+
+    const cached = await CacheService.get(cacheKey);
+    if (cached) return response.status(200).json(cached);
+
     const membership = await BrandMember.query()
       .where('brandId', brandId)
       .where('userId', user.id)
@@ -29,17 +37,19 @@ export default class IndexController {
       .preload('tags')
       .orderBy('createdAt', 'desc');
 
-    // Members only see posts they created
     if (membership?.role === 'member') {
       postsQuery.where('created_by', user.id);
     }
 
     const posts = await postsQuery;
 
-    return response.status(200).json({
+    const result = {
       status: 'success',
       message: 'Posts retrieved successfully',
       data: posts,
-    });
+    };
+
+    await CacheService.set(cacheKey, result, CacheTTL.posts);
+    return response.status(200).json(result);
   }
 }

@@ -1,6 +1,7 @@
 import BrandMember from '#models/brand_member';
 import User from '#models/user';
 import ForbiddenException from '#exceptions/forbidden_exception';
+import CacheService, { CacheKey } from '#services/cache_service';
 import { createBrandMemberValidator } from '#validators/brand/brand_member_validator';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -58,6 +59,11 @@ export default class StoreController {
     });
 
     await member.load('user');
+
+    await CacheService.invalidate(
+      `cache:members:b:${brandId}:*`,
+      CacheKey.brands(payload.userId),
+    );
 
     return response.status(201).json({
       status: 'success',

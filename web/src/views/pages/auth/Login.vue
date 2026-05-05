@@ -60,37 +60,22 @@ async function handleSubmit() {
       <p class="text-sm text-gray-500 mb-8">Sign in to continue to your dashboard</p>
 
       <form @submit.prevent="handleSubmit" class="space-y-4">
-        <!-- Email -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-700">Email</label>
-          <input
-            v-model="form.email"
-            type="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            :class="[
-              'rounded-lg border text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition',
-              errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300',
-            ]"
-          />
-          <p v-if="errors.email" class="text-xs text-red-500">{{ errors.email }}</p>
-        </div>
-
-        <!-- Password -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-700">Password</label>
-          <input
-            v-model="form.password"
-            type="password"
-            autocomplete="current-password"
-            placeholder="••••••••"
-            :class="[
-              'rounded-lg border text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition',
-              errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300',
-            ]"
-          />
-          <p v-if="errors.password" class="text-xs text-red-500">{{ errors.password }}</p>
-        </div>
+        <FormField
+          label="Email"
+          v-model="form.email"
+          type="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          :error="errors.email"
+        />
+        <FormField
+          label="Password"
+          v-model="form.password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+          :error="errors.password"
+        />
 
         <!-- Server error -->
         <div
@@ -103,17 +88,9 @@ async function handleSubmit() {
           {{ serverError }}
         </div>
 
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <svg v-if="loading" class="size-4 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-          </svg>
+        <Button type="submit" :loading="loading" class="w-full">
           {{ loading ? 'Signing in…' : 'Sign in' }}
-        </button>
+        </Button>
       </form>
 
       <p class="text-sm text-center text-gray-500 mt-6">

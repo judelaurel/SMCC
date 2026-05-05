@@ -1,5 +1,6 @@
 import BrandMember from '#models/brand_member';
 import ForbiddenException from '#exceptions/forbidden_exception';
+import CacheService, { CacheKey } from '#services/cache_service';
 import { HttpContext } from '@adonisjs/core/http';
 
 export default class DestroyController {
@@ -28,7 +29,13 @@ export default class DestroyController {
       throw new ForbiddenException('Cannot remove the brand owner');
     }
 
+    const removedUserId = targetMember.userId;
     await targetMember.delete();
+
+    await CacheService.invalidate(
+      `cache:members:b:${brandId}:*`,
+      CacheKey.brands(removedUserId),
+    );
 
     return response.status(200).json({
       status: 'success',

@@ -3,6 +3,7 @@ import NotFoundException from '#exceptions/not_found_exception';
 import BrandMember from '#models/brand_member';
 import Post from '#models/post';
 import ScheduledPost from '#models/scheduled_post';
+import CacheService from '#services/cache_service';
 import { HttpContext } from '@adonisjs/core/http';
 
 export default class DestroyController {
@@ -26,8 +27,10 @@ export default class DestroyController {
       );
     }
 
-    if (post.state === 'archived') {
+    if (post.state === 'trash') {
+      const brandId = post.brandId;
       await post.delete();
+      await CacheService.invalidate(`cache:posts:b:${brandId}:*`);
     } else {
       // Cancel any pending/processing scheduled posts before archiving
       await ScheduledPost.query()
@@ -35,8 +38,13 @@ export default class DestroyController {
         .whereIn('publishStatus', ['pending', 'processing'])
         .update({ publishStatus: 'cancelled' });
 
-      post.state = 'archived';
+      post.state = 'trash';
       await post.save();
+
+      await CacheService.invalidate(
+        `cache:posts:b:${post.brandId}:*`,
+        `cache:schedules:b:${post.brandId}`,
+      );
     }
 
     return response.status(200).json({

@@ -1,6 +1,7 @@
 import Brand from '#models/brand';
 import Post from '#models/post';
 import ForbiddenException from '#exceptions/forbidden_exception';
+import CacheService, { CacheKey } from '#services/cache_service';
 import { HttpContext } from '@adonisjs/core/http';
 import { createPostValidator } from '#validators/post/create_validator';
 
@@ -29,6 +30,8 @@ export default class StoreController {
     post.isAiGenerated = payload.isAiGenerated ?? false;
 
     await post.save();
+
+    await CacheService.invalidate(`cache:posts:b:${post.brandId}:*`);
 
     const formatResponse = {
       id: post.id,

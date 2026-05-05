@@ -98,69 +98,44 @@ async function handleSubmit() {
 
     <form v-else @submit.prevent="handleSubmit" class="space-y-5">
       <div class="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-        <!-- Name -->
-        <div class="flex flex-col">
-          <label class="mb-1.5 text-sm font-medium text-gray-700">
-            Name <span class="text-red-500">*</span>
-          </label>
-          <input
-            v-model="form.name"
-            type="text"
-            placeholder="Brand name"
-            class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          <span v-if="errors.name" class="text-sm text-red-500 mt-1">
-            {{ errors.name }}
-          </span>
-        </div>
+        <FormField
+          label="Name"
+          v-model="form.name"
+          placeholder="Brand name"
+          required
+          :error="errors.name"
+        />
 
-        <!-- Description -->
-        <div class="flex flex-col">
-          <label class="mb-1.5 text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            v-model="form.description"
-            rows="3"
-            placeholder="Brief brand description..."
-            class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
+        <FormField
+          label="Description"
+          v-model="form.description"
+          type="textarea"
+          :rows="3"
+          placeholder="Brief brand description..."
+        />
 
-        <!-- Tone of Voice -->
-        <div class="flex flex-col">
-          <label class="mb-1.5 text-sm font-medium text-gray-700">
-            Tone of Voice <span class="text-red-500">*</span>
-          </label>
-          <select
-            v-model="form.toneOfVoice"
-            class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          >
-            <option value="professional">Professional</option>
-            <option value="casual">Casual</option>
-            <option value="witty">Witty</option>
-            <option value="formal">Formal</option>
-          </select>
-        </div>
+        <AppSelect
+          label="Tone of Voice"
+          v-model="form.toneOfVoice"
+          required
+          :options="[
+            { value: 'professional', label: 'Professional' },
+            { value: 'casual', label: 'Casual' },
+            { value: 'witty', label: 'Witty' },
+            { value: 'formal', label: 'Formal' },
+          ]"
+        />
 
-        <!-- Logo URL -->
-        <div class="flex flex-col">
-          <label class="mb-1.5 text-sm font-medium text-gray-700">
-            Logo URL
-          </label>
-          <input
-            v-model="form.logoUrl"
-            type="url"
-            placeholder="https://example.com/logo.png"
-            class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
+        <FormField
+          label="Logo URL"
+          v-model="form.logoUrl"
+          type="url"
+          placeholder="https://example.com/logo.png"
+        />
 
         <!-- Primary Color -->
-        <div class="flex flex-col">
-          <label class="mb-1.5 text-sm font-medium text-gray-700">
-            Primary Color
-          </label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Primary Color</label>
           <div class="flex items-center gap-3">
             <input
               v-model="form.primaryColor"
@@ -179,19 +154,9 @@ async function handleSubmit() {
 
       <!-- Actions -->
       <div class="flex items-center gap-3">
-        <button
-          type="submit"
-          :disabled="saving"
-          class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-        >
-          {{
-            saving
-              ? 'Saving...'
-              : isEdit
-                ? 'Update Brand'
-                : 'Create Brand'
-          }}
-        </button>
+        <Button type="submit" :loading="saving">
+          {{ isEdit ? 'Update Brand' : 'Create Brand' }}
+        </Button>
         <router-link
           to="/brands"
           class="inline-flex items-center px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"

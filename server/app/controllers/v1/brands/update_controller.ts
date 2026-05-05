@@ -1,6 +1,7 @@
 import Brand from '#models/brand';
 import BrandMember from '#models/brand_member';
 import ForbiddenException from '#exceptions/forbidden_exception';
+import CacheService from '#services/cache_service';
 import { updateBrandValidator } from '#validators/brand/update_validator';
 import { HttpContext } from '@adonisjs/core/http';
 
@@ -22,6 +23,9 @@ export default class UpdateController {
     const payload = await request.validateUsing(updateBrandValidator);
     brand.merge(payload);
     await brand.save();
+
+    // Invalidate all users' brand caches (any member sees this brand)
+    await CacheService.invalidate('cache:brands:u:*');
 
     return response.status(200).json({
       status: 'success',

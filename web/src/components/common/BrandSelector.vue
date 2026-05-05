@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useBrandStore } from '@/stores/brand.ts'
 
 const brandStore = useBrandStore()
@@ -12,6 +12,13 @@ function toggle() {
 function select(id: number) {
   brandStore.selectBrand(id)
   open.value = false
+}
+
+async function onScroll(event: Event) {
+  const el = event.target as HTMLElement
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+    await brandStore.loadMoreBrands()
+  }
 }
 </script>
 
@@ -47,7 +54,8 @@ function select(id: number) {
     <!-- Dropdown -->
     <div
       v-if="open"
-      class="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1"
+      class="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-[220px] overflow-y-auto"
+      @scroll="onScroll"
     >
       <button
         v-for="brand in brandStore.brands"
@@ -67,6 +75,19 @@ function select(id: number) {
         />
         <span class="truncate">{{ brand.name }}</span>
       </button>
+
+      <div
+        v-if="brandStore.loadingMore"
+        class="px-3 py-2 text-xs text-center text-gray-400"
+      >
+        Loading...
+      </div>
+      <div
+        v-else-if="brandStore.brandsMeta?.hasMore"
+        class="px-3 py-2 text-xs text-center text-gray-400 select-none"
+      >
+        Scroll for more
+      </div>
 
       <div
         v-if="!brandStore.brands.length"

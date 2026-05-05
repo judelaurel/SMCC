@@ -312,31 +312,18 @@ async function handleTabChange(tab: Tab) {
           </div>
 
           <div class="space-y-4">
-            <!-- First name -->
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium text-gray-700">
-                First Name <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="profileForm.firstName"
-                type="text"
-                class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-              <p v-if="profileErrors.firstName" class="text-xs text-red-500">{{ profileErrors.firstName }}</p>
-            </div>
-
-            <!-- Last name -->
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium text-gray-700">
-                Last Name <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="profileForm.lastName"
-                type="text"
-                class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-              <p v-if="profileErrors.lastName" class="text-xs text-red-500">{{ profileErrors.lastName }}</p>
-            </div>
+            <FormField
+              v-model="profileForm.firstName"
+              label="First Name"
+              required
+              :error="profileErrors.firstName"
+            />
+            <FormField
+              v-model="profileForm.lastName"
+              label="Last Name"
+              required
+              :error="profileErrors.lastName"
+            />
 
             <!-- Read-only fields -->
             <div class="flex flex-col gap-1">
@@ -372,13 +359,7 @@ async function handleTabChange(tab: Tab) {
               Profile updated successfully
             </div>
 
-            <button
-              @click="handleProfileSave"
-              :disabled="profileSaving"
-              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              {{ profileSaving ? 'Saving…' : 'Save Changes' }}
-            </button>
+            <Button :loading="profileSaving" @click="handleProfileSave">Save Changes</Button>
           </div>
         </div>
 
@@ -388,38 +369,27 @@ async function handleTabChange(tab: Tab) {
           <p class="text-sm text-gray-500 mb-5">Must include at least 8 characters, one uppercase letter and one number.</p>
 
           <div class="space-y-4">
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium text-gray-700">Current Password</label>
-              <input
-                v-model="passwordForm.currentPassword"
-                type="password"
-                autocomplete="current-password"
-                class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-              <p v-if="passwordErrors.currentPassword" class="text-xs text-red-500">{{ passwordErrors.currentPassword }}</p>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium text-gray-700">New Password</label>
-              <input
-                v-model="passwordForm.newPassword"
-                type="password"
-                autocomplete="new-password"
-                class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-              <p v-if="passwordErrors.newPassword" class="text-xs text-red-500">{{ passwordErrors.newPassword }}</p>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium text-gray-700">Confirm New Password</label>
-              <input
-                v-model="passwordForm.confirmNewPassword"
-                type="password"
-                autocomplete="new-password"
-                class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-              <p v-if="passwordErrors.confirmNewPassword" class="text-xs text-red-500">{{ passwordErrors.confirmNewPassword }}</p>
-            </div>
+            <FormField
+              v-model="passwordForm.currentPassword"
+              label="Current Password"
+              type="password"
+              autocomplete="current-password"
+              :error="passwordErrors.currentPassword"
+            />
+            <FormField
+              v-model="passwordForm.newPassword"
+              label="New Password"
+              type="password"
+              autocomplete="new-password"
+              :error="passwordErrors.newPassword"
+            />
+            <FormField
+              v-model="passwordForm.confirmNewPassword"
+              label="Confirm New Password"
+              type="password"
+              autocomplete="new-password"
+              :error="passwordErrors.confirmNewPassword"
+            />
 
             <p v-if="passwordErrors.general" class="text-sm text-red-500">{{ passwordErrors.general }}</p>
 
@@ -433,13 +403,7 @@ async function handleTabChange(tab: Tab) {
               Password changed successfully
             </div>
 
-            <button
-              @click="handlePasswordSave"
-              :disabled="passwordSaving"
-              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              {{ passwordSaving ? 'Saving…' : 'Update Password' }}
-            </button>
+            <Button :loading="passwordSaving" @click="handlePasswordSave">Update Password</Button>
           </div>
         </div>
 
