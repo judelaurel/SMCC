@@ -75,6 +75,13 @@ services:
       - ollama_volume:/root/.ollama
     networks:
       - app-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     entrypoint: >
       sh -c "ollama serve &
              sleep 5 &&

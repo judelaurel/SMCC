@@ -1,4 +1,5 @@
 import SocialAccount from '#models/social_account';
+import CacheService, { CacheKey } from '#services/cache_service';
 import { mastodonOAuthService } from '#services/oauth/mastodon_oauth_service';
 import { oauthStateService } from '#services/oauth/oauth_state_service';
 import { HttpContext } from '@adonisjs/core/http';
@@ -44,6 +45,20 @@ export default class CallbackController {
       });
     }
 
+    // Check if this Mastodon account is already linked by another user
+    const existingAccount = await SocialAccount.query()
+      .where('providerUserId', profile.providerUserId)
+      .where('platformId', state.platformId)
+      .whereNot('userId', user.id)
+      .first();
+
+    if (existingAccount) {
+      return response.status(409).json({
+        status: 'error',
+        message: 'This Mastodon account is already linked to another user',
+      });
+    }
+
     await SocialAccount.updateOrCreate(
       { userId: state.userId, platformId: state.platformId },
       {
@@ -53,7 +68,13 @@ export default class CallbackController {
         refreshToken: tokens.refreshToken,
         expiresAt: tokens.expiresAt ? DateTime.fromISO(tokens.expiresAt) : null,
         scope: tokens.scope,
+        isActive: true,
       },
+    );
+
+    await CacheService.invalidate(
+      CacheKey.socialAccounts(user.id),
+      `cache:schedules:u:${user.id}`,
     );
 
     return response.status(200).json({
