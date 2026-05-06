@@ -46,7 +46,10 @@ export default class UpdateController {
     await targetMember.save();
     await targetMember.load('user');
 
-    await CacheService.invalidate(`cache:members:b:${brandId}:*`);
+    await CacheService.invalidate(
+      `cache:members:b:${brandId}:*`,
+      `cache:posts:b:${brandId}:u:${targetMember.userId}*`,
+    );
 
     return response.status(200).json({
       status: 'success',

@@ -1,5 +1,4 @@
 import SocialPlatform from '#models/social_platform';
-import CacheService, { CacheKey } from '#services/cache_service';
 import { mastodonOAuthService } from '#services/oauth/mastodon_oauth_service';
 import { oauthStateService } from '#services/oauth/oauth_state_service';
 import { HttpContext } from '@adonisjs/core/http';
@@ -16,31 +15,6 @@ export default class RedirectController {
       });
     }
 
-    // check if user already has an inactive social account for this platform
-    const existingAccount = await user
-      .related('socialAccounts')
-      .query()
-      .where('platformId', platformId)
-      .where('isActive', false)
-      .first();
-
-    if (existingAccount) {
-      existingAccount.isActive = true;
-      await existingAccount.save();
-
-      await CacheService.invalidate(
-        CacheKey.socialAccounts(user.id),
-        `cache:schedules:u:${user.id}`,
-      );
-
-      return response.status(200).json({
-        status: 'success',
-        message: 'Social account reactivated successfully',
-        data: { url: 'http://localhost:3000/settings?tab=social-accounts' },
-      });
-    }
-
-    // Verify the platform belongs to a brand owned by the user and is mastodon
     const platform = await SocialPlatform.findByOrFail('id', platformId);
 
     const state = oauthStateService.encode({

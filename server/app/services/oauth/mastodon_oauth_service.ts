@@ -36,11 +36,7 @@ export class MastodonOAuthService extends BaseOAuthService {
       redirect_uri: this.redirectUri,
       response_type: 'code',
       state,
-    });
-    console.log({
-      instance: this.instance,
-      redirectUri: this.redirectUri,
-      clientId: this.clientId,
+      force_login: 'true',
     });
     return `https://${this.instance}/oauth/authorize?${params.toString()}`;
   }
